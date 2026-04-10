@@ -28,8 +28,11 @@ export function LoginPage() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const redirectTo = useMemo(() => {
-    const state = location.state as any;
-    return state?.from?.pathname?.startsWith("/app") ? state.from.pathname : "/app";
+    const state = location.state as { from?: { pathname?: string } } | undefined;
+    const from = state?.from?.pathname;
+    if (from?.startsWith("/admin")) return from;
+    if (from?.startsWith("/app")) return from;
+    return "/app";
   }, [location.state]);
 
   const form = useForm<FormValues>({
@@ -42,7 +45,14 @@ export function LoginPage() {
     setError(null);
     try {
       await login(values.email, values.password, values.rememberMe);
-      navigate(redirectTo, { replace: true });
+      const u = useAuthStore.getState().user;
+      if (u?.role === "PANWORLD_ADMIN") {
+        const state = location.state as { from?: { pathname?: string } } | undefined;
+        const from = state?.from?.pathname;
+        navigate(from?.startsWith("/admin") ? from : "/admin", { replace: true });
+      } else {
+        navigate(redirectTo, { replace: true });
+      }
     } catch (e: any) {
       setError(e?.message ?? "Login failed");
     } finally {

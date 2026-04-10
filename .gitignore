@@ -23,3 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local uploads (school logos, etc.)
+panworld/backend/uploads/*
+!panworld/backend/uploads/.gitkeep

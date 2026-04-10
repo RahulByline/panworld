@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./RequireAuth.tsx";
+import { RequireRole } from "./RequireRole.tsx";
 import { AuthLayout } from "../ui/layouts/AuthLayout.tsx";
 import { AppLayout } from "../ui/layouts/AppLayout.tsx";
+import { AdminLayout } from "../ui/layouts/AdminLayout.tsx";
+import { PanworldAdminRedirect } from "./PanworldAdminRedirect.tsx";
 import { LoginPage } from "../ui/pages/auth/LoginPage.tsx";
 import { ForgotPasswordPage } from "../ui/pages/auth/ForgotPasswordPage.tsx";
 import { ResetPasswordPage } from "../ui/pages/auth/ResetPasswordPage.tsx";
@@ -32,6 +35,9 @@ import { UsersPage } from "../ui/pages/app/UsersPage.tsx";
 import { SyncLogsPage } from "../ui/pages/app/SyncLogsPage.tsx";
 import { CurriculumMappingPage } from "../ui/pages/app/CurriculumMappingPage.tsx";
 import { DemoHubPage } from "../ui/pages/app/DemoHubPage.tsx";
+import { AdminDashboard } from "../ui/pages/admin/AdminDashboard.tsx";
+import { AdminSchoolsPage } from "../ui/pages/admin/AdminSchoolsPage.tsx";
+import { AdminPlaceholderPage } from "../ui/pages/admin/AdminPlaceholderPage.tsx";
 
 export function AppRoutes() {
   return (
@@ -48,7 +54,9 @@ export function AppRoutes() {
         path="/app/*"
         element={
           <RequireAuth>
-            <AppLayout />
+            <PanworldAdminRedirect>
+              <AppLayout />
+            </PanworldAdminRedirect>
           </RequireAuth>
         }
       >
@@ -80,6 +88,28 @@ export function AppRoutes() {
           path="__placeholder"
           element={<PlaceholderPage title="Placeholder" description="(kept for quick scaffolding)" />}
         />
+      </Route>
+
+      <Route
+        path="/admin/*"
+        element={
+          <RequireAuth>
+            <RequireRole roles={["PANWORLD_ADMIN"]}>
+              <AdminLayout />
+            </RequireRole>
+          </RequireAuth>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="schools" element={<AdminSchoolsPage />} />
+        <Route path="analytics" element={<AdminPlaceholderPage titleKey="admin.titles.analytics" />} />
+        <Route path="rfq" element={<AdminPlaceholderPage titleKey="admin.titles.rfq" />} />
+        <Route path="support" element={<AdminPlaceholderPage titleKey="admin.titles.support" />} />
+        <Route path="cms/catalogue" element={<AdminPlaceholderPage titleKey="admin.titles.cmsCatalogue" />} />
+        <Route path="cms/announcements" element={<AdminPlaceholderPage titleKey="admin.titles.cmsAnnouncements" />} />
+        <Route path="cms/demo-credentials" element={<AdminPlaceholderPage titleKey="admin.titles.cmsDemo" />} />
+        <Route path="cms/resources" element={<AdminPlaceholderPage titleKey="admin.titles.cmsResources" />} />
+        <Route path="whatsapp-logs" element={<AdminPlaceholderPage titleKey="admin.titles.whatsapp" />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
