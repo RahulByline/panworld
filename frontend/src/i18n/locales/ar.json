@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "بوابة شركاء مدارس بانورلد"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "sendReset": "إرسال رابط إعادة التعيين",
+    "newPassword": "كلمة المرور الجديدة",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "demoShortcuts": "حسابات تجريبية",
+    "continue": "متابعة"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "catalogue": "الكتالوج",
+    "wishlist": "قائمة الرغبات",
+    "curriculumMapping": "مواءمة المنهج",
+    "demoHub": "مركز العروض",
+    "announcements": "الإعلانات",
+    "contacts": "جهات الاتصال",
+    "training": "مكتبة التدريب",
+    "support": "تذاكر الدعم",
+    "webinars": "الندوات والتطوير المهني",
+    "resources": "مكتبة الموارد",
+    "samples": "طلبات العينات",
+    "certificates": "الشهادات",
+    "analytics": "التحليلات",
+    "assessment": "بوابة الاختبارات",
+    "rfq": "سير عمل طلبات التسعير",
+    "orders": "الطلبات",
+    "invoices": "الفواتير",
+    "users": "المستخدمون والإعدادات",
+    "syncLogs": "سجلات المزامنة (أودو)"
+  },
+  "common": {
+    "search": "بحث",
+    "filters": "عوامل التصفية",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "view": "عرض",
+    "create": "إنشاء",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "export": "تصدير (تجريبي)",
+    "language": "اللغة",
+    "english": "English",
+    "arabic": "العربية",
+    "loading": "جارٍ التحميل…"
+  }
+}
+

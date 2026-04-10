@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "Panworld School Partner Portal"
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "sendReset": "Send reset link",
+    "newPassword": "New password",
+    "backToLogin": "Back to login",
+    "demoShortcuts": "Demo shortcuts",
+    "continue": "Continue"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "catalogue": "Catalogue",
+    "wishlist": "Wishlist",
+    "curriculumMapping": "Curriculum Mapping",
+    "demoHub": "Demo Hub",
+    "announcements": "Announcements",
+    "contacts": "Contacts",
+    "training": "Training Library",
+    "support": "Support Tickets",
+    "webinars": "Webinars & PD",
+    "resources": "Resource Library",
+    "samples": "Sample Requests",
+    "certificates": "Certificates",
+    "analytics": "Analytics",
+    "assessment": "Assessment Portal",
+    "rfq": "RFQ Workflow",
+    "orders": "Orders",
+    "invoices": "Invoices",
+    "users": "Users & Settings",
+    "syncLogs": "Sync Logs (Odoo)"
+  },
+  "common": {
+    "search": "Search",
+    "filters": "Filters",
+    "status": "Status",
+    "actions": "Actions",
+    "view": "View",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "export": "Export",
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic",
+    "loading": "Loading…"
+  }
+}
+
