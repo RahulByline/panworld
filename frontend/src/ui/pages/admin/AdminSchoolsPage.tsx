@@ -1,14 +1,19 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, X, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, Pencil, Plus, UserPlus, X } from "lucide-react";
 import { Card } from "../../components/Card";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { api } from "../../../services/api";
+import { AssignProductsToSchoolModal } from "../../admin/components/AssignProductsToSchoolModal";
+import { SchoolViewModal } from "../../admin/components/SchoolViewModal";
+import { useAdminToast } from "../../admin/hooks/useAdminToast";
+import { ASSIGNABLE_PRODUCTS, DEFAULT_ASSIGNED_PRODUCT_IDS } from "../../../data/admin/assignableCatalogue";
 
 const WHATSAPP_RE = /^[\d+()[\]\s\-]{8,40}$/;
 
@@ -130,6 +135,8 @@ const defaultCreateValues: CreateFormValues = {
 
 export function AdminSchoolsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { show, Toast } = useAdminToast();
   const [schools, setSchools] = useState<SchoolRow[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [banner, setBanner] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -159,6 +166,44 @@ export function AdminSchoolsPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [assignProductsOpen, setAssignProductsOpen] = useState(false);
+  const [schoolProductAssignments, setSchoolProductAssignments] = useState<Record<string, string[]>>({});
+
+  const getAssignments = useCallback(
+    (sid: string) => {
+      if (!sid) return [];
+      const saved = schoolProductAssignments[sid];
+      if (saved) return saved;
+      return [...DEFAULT_ASSIGNED_PRODUCT_IDS];
+    },
+    [schoolProductAssignments],
+  );
+
+  const accountManagerLabel = useCallback(
+    (sid: string) => {
+      const row = schools.find((s) => s.id === sid);
+      if (!row) return "—";
+      const c = (row.country || "").toUpperCase();
+      if (c === "UAE" || c.includes("AE") || c.includes("EMIRATES")) return "Rania Khalil (UAE)";
+      if (c === "SA" || c.includes("SAUDI") || c === "KSA") return "Omar Hassan (KSA)";
+      return "Panworld AM (Regional)";
+    },
+    [schools],
+  );
+
+  const viewingSchool = useMemo(
+    () => (viewingId ? (schools.find((s) => s.id === viewingId) ?? null) : null),
+    [viewingId, schools],
+  );
+
+  const assignedForViewSchool = useMemo(() => {
+    if (!viewingId) return [];
+    return getAssignments(viewingId)
+      .map((id) => ASSIGNABLE_PRODUCTS.find((p) => p.id === id))
+      .filter((p): p is (typeof ASSIGNABLE_PRODUCTS)[number] => !!p);
+  }, [viewingId, getAssignments]);
 
   const createForm = useForm<CreateFormValues>({
     resolver: zodResolver(CreateSchoolSchema) as any,
@@ -583,6 +628,17 @@ export function AdminSchoolsPage() {
     }
   }
 
+  function openView(id: string) {
+    setViewingId(id);
+    setViewOpen(true);
+  }
+
+  function closeView() {
+    setViewOpen(false);
+    setViewingId(null);
+    setAssignProductsOpen(false);
+  }
+
   function openEdit(id: string) {
     setEditingId(id);
     setEditOpen(true);
@@ -618,6 +674,7 @@ export function AdminSchoolsPage() {
 
   return (
     <div className="space-y-6">
+      <Toast />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-['DM_Serif_Display',serif] text-2xl text-[#1A1917]">{t("admin.schools.title")}</h1>
@@ -680,14 +737,24 @@ export function AdminSchoolsPage() {
                     <td className="px-3 py-2 text-[#5C5A55]">{s.curriculumType}</td>
                     <td className="px-3 py-2 text-[#9A9890]">{new Date(s.createdAt).toLocaleDateString()}</td>
                     <td className="px-3 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(s.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0D9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#0A3D62] hover:bg-[#F5F4F0]"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        {t("common.edit")}
-                      </button>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openView(s.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0D9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1A1917] hover:bg-[#F5F4F0]"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          {t("admin.schools.colView")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(s.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0D9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#0A3D62] hover:bg-[#F5F4F0]"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          {t("common.edit")}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -998,6 +1065,60 @@ export function AdminSchoolsPage() {
           </div>
         </div>
       ) : null}
+
+      <SchoolViewModal
+        open={viewOpen}
+        onClose={closeView}
+        t={t}
+        school={viewingSchool}
+        accountManager={viewingId ? accountManagerLabel(viewingId) : "—"}
+        assignedProducts={assignedForViewSchool}
+        onAssignProducts={() => setAssignProductsOpen(true)}
+        onImpersonate={() => {
+          show(t("admin.schools.assignProducts.toastImpersonate"));
+          navigate("/app");
+        }}
+        onViewRfqs={() => {
+          const name = viewingSchool?.name ?? "";
+          show(t("admin.schools.assignProducts.toastRfq", { name }));
+          navigate("/admin/rfq");
+        }}
+        onViewOrders={() => {
+          const name = viewingSchool?.name ?? "";
+          show(t("admin.schools.assignProducts.toastOrders", { name }));
+          navigate("/admin/orders");
+        }}
+        onDeactivate={() => {
+          const name = viewingSchool?.name ?? "";
+          if (window.confirm(t("admin.schools.assignProducts.confirmDeactivate", { name }))) {
+            show(t("admin.schools.assignProducts.toastDeactivated"));
+          }
+        }}
+        onEdit={() => {
+          const id = viewingId;
+          closeView();
+          if (id) openEdit(id);
+        }}
+        onSaveChanges={() => {
+          show(t("admin.schools.view.savedToast"));
+          closeView();
+        }}
+      />
+
+      <AssignProductsToSchoolModal
+        open={assignProductsOpen}
+        onClose={() => setAssignProductsOpen(false)}
+        t={t}
+        schools={schools.map((s) => ({ id: s.id, name: s.name }))}
+        initialSchoolId={viewingId}
+        accountManagerLabel={accountManagerLabel}
+        getAssignments={getAssignments}
+        onSave={(sid, ids) => {
+          setSchoolProductAssignments((prev) => ({ ...prev, [sid]: ids }));
+          const name = schools.find((x) => x.id === sid)?.name ?? sid;
+          show(t("admin.schools.assignProducts.savedToast", { name }));
+        }}
+      />
 
       {refModal ? (
         <div
