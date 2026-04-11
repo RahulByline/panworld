@@ -1,66 +1,90 @@
-import { Card } from "../../components/Card";
-import { Button } from "../../components/Button";
-import { useAuthStore } from "../../../store/auth.store";
+import { useTranslation } from "react-i18next";
+import { PwPageHeader } from "../../panworld/PwPageHeader";
+import { cn } from "../../utils/cn";
+
+const RESULT_ROWS = [
+  { assessment: "Mid-Term 2", subject: "Science", grade: "G5", students: "124", score: "78%", scoreClass: "text-[#1E8449]", date: "18 Mar 2026" },
+  { assessment: "Mid-Term 2", subject: "Mathematics", grade: "G5", students: "124", score: "72%", scoreClass: "text-[#0A3D62]", date: "15 Mar 2026" },
+  { assessment: "Quiz 4", subject: "ELA", grade: "G3", students: "98", score: "81%", scoreClass: "text-[#1E8449]", date: "12 Mar 2026" },
+  { assessment: "Mid-Term 2", subject: "Social Sciences", grade: "G6", students: "108", score: "65%", scoreClass: "text-[#E8912D]", date: "10 Mar 2026" },
+];
 
 export function AssessmentPage() {
-  const user = useAuthStore((s) => s.user);
-  const school = useAuthStore((s) => s.school);
+  const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-2xl font-semibold text-slate-900">Assessment</div>
-          <div className="mt-1 text-sm text-slate-600">Launchpad for assessment access.</div>
+    <div>
+      <PwPageHeader
+        title={t("nav.assessment")}
+        subtitle={t("mvpPages.assessment.subtitle")}
+        right={
+          <button type="button" className="pw-btn pw-btn-primary">
+            {t("mvpPages.assessment.launchFull")}
+          </button>
+        }
+      />
+
+      <div className="pw-grid-4 mb-8">
+        <div className="pw-stat-card">
+          <div className="pw-stat-label">{t("mvpPages.assessment.studentsAssessed")}</div>
+          <div className="pw-stat-value">847</div>
+          <div className="pw-stat-sub">{t("mvpPages.assessment.acrossGrades")}</div>
         </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Request access
-          </Button>
-          <Button type="button">Launch</Button>
+        <div className="pw-stat-card">
+          <div className="pw-stat-label">{t("mvpPages.assessment.avgScore")}</div>
+          <div className="pw-stat-value text-[#1E8449]">74%</div>
+          <div className="pw-stat-sub">{t("mvpPages.assessment.scoreHint")}</div>
+        </div>
+        <div className="pw-stat-card">
+          <div className="pw-stat-label">{t("mvpPages.assessment.assessmentsCompleted")}</div>
+          <div className="pw-stat-value">12</div>
+          <div className="pw-stat-sub">{t("mvpPages.assessment.thisYear")}</div>
+        </div>
+        <div className="pw-stat-card">
+          <div className="pw-stat-label">{t("mvpPages.assessment.nextAssessment")}</div>
+          <div className="pw-stat-value text-lg">May 15</div>
+          <div className="pw-stat-sub">{t("mvpPages.assessment.nextAssessmentSub")}</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <Card className="p-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">User</div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">
-            {user ? `${user.firstName} ${user.lastName}` : "—"}
-          </div>
-          <div className="mt-1 text-sm text-slate-600">{user?.role ?? "—"}</div>
-        </Card>
-        <Card className="p-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">School</div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">{school?.name ?? "—"}</div>
-          <div className="mt-1 text-sm text-slate-600">{school?.country ?? "—"}</div>
-        </Card>
-        <Card className="p-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Eligibility</div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">Eligible</div>
-          <div className="mt-1 text-sm text-slate-600">Based on contract + roster sync.</div>
-        </Card>
+      <div className="pw-card mb-6">
+        <div className="mb-3.5 text-sm font-semibold text-[#1A1917]">{t("mvpPages.assessment.recentResults")}</div>
+        <table className="pw-data-table">
+          <thead>
+            <tr>
+              <th>{t("mvpPages.assessment.colAssessment")}</th>
+              <th>{t("mvpPages.assessment.colSubject")}</th>
+              <th>{t("mvpPages.assessment.colGrade")}</th>
+              <th>{t("mvpPages.assessment.colStudents")}</th>
+              <th>{t("mvpPages.assessment.colAvgScore")}</th>
+              <th>{t("mvpPages.assessment.colDate")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RESULT_ROWS.map((r) => (
+              <tr key={`${r.assessment}-${r.subject}-${r.date}`}>
+                <td className="font-semibold">{r.assessment}</td>
+                <td>{r.subject}</td>
+                <td>{r.grade}</td>
+                <td>{r.students}</td>
+                <td className={cn("font-semibold", r.scoreClass)}>{r.score}</td>
+                <td className="text-[#9A9890]">{r.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <Card className="p-5">
-        <div className="text-sm font-semibold text-slate-900">Assessment systems</div>
-        <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {["NCC Assessments", "Publisher Portal", "Internal Benchmarks"].map((x) => (
-            <div key={x} className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-slate-900">{x}</div>
-              <div className="mt-1 text-sm text-slate-600">SSO launch configured in production.</div>
-              <div className="mt-3 flex gap-2">
-                <Button type="button" size="sm">
-                  Launch
-                </Button>
-                <Button type="button" size="sm" variant="secondary">
-                  Help
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <div className="rounded-2xl border-2 border-dashed border-[#E2E0D9] bg-white px-6 py-10 text-center">
+        <div className="mb-2 text-3xl">📊</div>
+        <div className="mb-1.5 text-[15px] font-medium text-[#1A1917]">{t("mvpPages.assessment.ssoTitle")}</div>
+        <div className="mb-4 text-[13px] text-[#5C5A55]">{t("mvpPages.assessment.ssoBody")}</div>
+        <a href="https://app.legato-metronome.com" target="_blank" rel="noopener noreferrer">
+        <button type="button" className="pw-btn pw-btn-primary">
+          {t("mvpPages.assessment.openPortal")}
+        </button>
+        </a>
+      </div>
     </div>
   );
 }
-

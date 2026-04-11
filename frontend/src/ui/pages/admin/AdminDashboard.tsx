@@ -3,41 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../../store/auth.store";
 import { api } from "../../../services/api";
-
-const DEMO_RFQS = [
-  {
-    av: "AN",
-    avClass: "bg-[#D6EAF8] text-[#0A3D62]",
-    title: "Al Noor Int'l — Inspire Science G1–G8",
-    meta: "420 students · Submitted 1 Apr",
-  },
-  {
-    av: "GD",
-    avClass: "bg-[#E8F5E9] text-[#1E8449]",
-    title: "GEMS Dubai — Reveal Math + Wonders",
-    meta: "680 students · Submitted 5 Apr",
-  },
-  {
-    av: "TL",
-    avClass: "bg-[#EDE7F6] text-[#512DA8]",
-    title: "Taaleem — StudySync GCC Ed. G6–G12",
-    meta: "300 licences · Submitted 7 Apr",
-  },
-];
-
-const PUBLISHER_BARS = [
-  { name: "McGraw Hill", pct: 74, fill: "success" as const },
-  { name: "Kodeit", pct: 61, fill: "brand" as const },
-  { name: "StudySync", pct: 48, fill: "accent" as const },
-  { name: "Achieve3000", pct: 32, fill: "accent" as const },
-];
-
-const ACTIVITY_ROWS = [
-  { school: "Al Noor International", country: "UAE", phase: "Phase 1+2+3", login: "Today", rfqs: "3", train: "68%", trainClass: "text-[#1E8449]" },
-  { school: "GEMS World Academy", country: "UAE", phase: "Phase 1+2", login: "Yesterday", rfqs: "1", train: "52%", trainClass: "text-[#0A3D62]" },
-  { school: "Al Faisaliyah School", country: "KSA", phase: "Phase 1", login: "3 days ago", rfqs: "0", train: "20%", trainClass: "text-[#E8912D]" },
-  { school: "Taaleem Group", country: "UAE", phase: "Phase 1+2+3", login: "Today", rfqs: "2", train: "81%", trainClass: "text-[#1E8449]" },
-];
+import { publisherEngagementBars, recentRfqRequests, schoolActivityRows } from "../../../data/admin/dashboard";
 
 export function AdminDashboard() {
   const { t } = useTranslation();
@@ -71,7 +37,7 @@ export function AdminDashboard() {
     return t("admin.dashboard.bannerMeta", { date });
   }, [t]);
 
-  const displaySchools = schoolCount ?? "142";
+  const displaySchools = schoolCount ?? "0";
 
   return (
     <div className="font-sans">
@@ -129,7 +95,7 @@ export function AdminDashboard() {
             </Link>
           </div>
           <div className="divide-y divide-[#E2E0D9]">
-            {DEMO_RFQS.map((r) => (
+            {recentRfqRequests.map((r) => (
               <div key={r.title} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${r.avClass}`}>{r.av}</div>
                 <div className="min-w-0 flex-1">
@@ -148,7 +114,7 @@ export function AdminDashboard() {
         <div className="rounded-2xl border border-[#E2E0D9] bg-white p-5">
           <div className="mb-4 text-sm font-semibold">{t("admin.dashboard.trainingByPublisher")}</div>
           <div className="space-y-3">
-            {PUBLISHER_BARS.map((p) => (
+            {publisherEngagementBars.map((p) => (
               <div key={p.name}>
                 <div className="mb-1 flex justify-between text-[12.5px]">
                   <span>{p.name}</span>
@@ -192,7 +158,7 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {ACTIVITY_ROWS.map((row) => (
+              {schoolActivityRows.map((row) => (
                 <tr key={row.school} className="border-b border-[#E2E0D9] last:border-0 hover:bg-[#FAFAF8]">
                   <td className="py-3 pr-3 font-semibold">{row.school}</td>
                   <td className="py-3 pr-3">{row.country}</td>

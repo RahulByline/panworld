@@ -18,7 +18,7 @@ export function ForgotPasswordPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(Schema),
-    defaultValues: { email: "teacher@panworld-demo.com" },
+    defaultValues: { email: "admin@panworld-demo.com" },
   });
 
   async function onSubmit(values: FormValues) {

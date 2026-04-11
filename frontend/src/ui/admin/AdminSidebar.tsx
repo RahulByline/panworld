@@ -11,6 +11,10 @@ import {
   KeyRound,
   FolderOpen,
   MessageCircle,
+  Users,
+  ScrollText,
+  Building2,
+  Plug,
 } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { cn } from "../utils/cn";
@@ -20,6 +24,8 @@ type NavItem = { to: string; labelKey: string; icon: React.ComponentType<{ size?
 const OVERVIEW: NavItem[] = [
   { to: "/admin", labelKey: "admin.nav.dashboard", icon: LayoutDashboard },
   { to: "/admin/analytics", labelKey: "admin.nav.analytics", icon: BarChart3 },
+  { to: "/admin/account-managers", labelKey: "admin.nav.accountManagers", icon: Users },
+  { to: "/admin/audit-log", labelKey: "admin.nav.auditLog", icon: ScrollText },
 ];
 
 const SCHOOLS: NavItem[] = [
@@ -28,10 +34,15 @@ const SCHOOLS: NavItem[] = [
   { to: "/admin/support", labelKey: "admin.nav.support", icon: LifeBuoy },
 ];
 
+const PLATFORM: NavItem[] = [
+  { to: "/admin/publishers", labelKey: "admin.nav.publishers", icon: Building2 },
+  { to: "/admin/integrations", labelKey: "admin.nav.integrations", icon: Plug },
+];
+
 const CMS: NavItem[] = [
   { to: "/admin/cms/catalogue", labelKey: "admin.nav.cmsCatalogue", icon: BookOpen },
   { to: "/admin/cms/announcements", labelKey: "admin.nav.cmsAnnouncements", icon: Megaphone },
-  { to: "/admin/cms/demo-credentials", labelKey: "admin.nav.cmsDemo", icon: KeyRound },
+  { to: "/admin/cms/publisher-access", labelKey: "admin.nav.publisherAccess", icon: KeyRound },
   { to: "/admin/cms/resources", labelKey: "admin.nav.cmsResources", icon: FolderOpen },
 ];
 
@@ -95,6 +106,8 @@ export function AdminSidebar() {
         <NavBlock items={OVERVIEW} />
         <Section titleKey="admin.nav.sectionSchools" />
         <NavBlock items={SCHOOLS} />
+        <Section titleKey="admin.nav.sectionPlatform" />
+        <NavBlock items={PLATFORM} />
         <Section titleKey="admin.nav.sectionCms" />
         <NavBlock items={CMS} />
         <Section titleKey="admin.nav.sectionAutomation" />

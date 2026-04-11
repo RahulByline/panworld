@@ -1,88 +1,126 @@
-import { useMemo, useState } from "react";
-import { Card } from "../../components/Card";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
-import { usePortalMock } from "./mockHooks";
+import { useTranslation } from "react-i18next";
+import { PwPageHeader } from "../../panworld/PwPageHeader";
+import { cn } from "../../utils/cn";
 
-function typeLabel(t: string) {
-  if (t === "ACCOUNT_MANAGER") return "Account manager";
-  if (t === "REGIONAL_MANAGER") return "Regional manager";
-  return "Publisher rep";
+const PANWORLD: {
+  initials: string;
+  avatarBg: string;
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+}[] = [
+  {
+    initials: "RK",
+    avatarBg: "var(--pw-brand)",
+    name: "Rania Khalil",
+    role: "Senior Account Manager · UAE",
+    phone: "+971 50 123 4567",
+    email: "r.khalil@panworld.ae",
+  },
+  {
+    initials: "MH",
+    avatarBg: "#512DA8",
+    name: "Mohamed Hassan",
+    role: "Regional Manager · UAE · Escalations",
+    phone: "+971 50 987 6543",
+    email: "m.hassan@panworld.ae",
+  },
+];
+
+const PUBLISHER_REPS: {
+  emoji: string;
+  pubClass: string;
+  name: string;
+  line: string;
+  contact: string;
+}[] = [
+  { emoji: "📗", pubClass: "pub-mcgraw", name: "Ahmed Al Rashidi", line: "McGraw Hill · UAE", contact: "+971 4 456 7890" },
+  { emoji: "🏫", pubClass: "pub-kodeit", name: "Lena Abdallah", line: "Kodeit Global · UAE", contact: "+971 4 111 2233" },
+  { emoji: "📕", pubClass: "pub-oxford", name: "Sara Malik", line: "Oxford · UAE & Gulf", contact: "+971 4 678 9012" },
+  { emoji: "📗", pubClass: "pub-cambridge", name: "James Mitchell", line: "Cambridge · UAE & Gulf", contact: "+971 4 345 6789" },
+  { emoji: "📙", pubClass: "pub-pearson", name: "Fatima Nasser", line: "Pearson / Savvas · UAE", contact: "+971 4 222 3344" },
+  { emoji: "🔤", pubClass: "pub-jolly", name: "Panworld KG Team", line: "Jolly Phonics enquiries", contact: "kg@panworld.ae" },
+];
+
+function digitsOnly(s: string) {
+  return s.replace(/\D/g, "");
 }
 
 export function ContactsPage() {
-  const { contacts } = usePortalMock();
-  const [q, setQ] = useState("");
-  const [type, setType] = useState<"All" | (typeof contacts)[number]["type"]>("All");
-
-  const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    return contacts
-      .filter((c) => (type === "All" ? true : c.type === type))
-      .filter((c) => (qq ? (c.name + " " + c.title + " " + (c.email ?? "")).toLowerCase().includes(qq) : true));
-  }, [contacts, q, type]);
+  const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-2xl font-semibold text-slate-900">Contacts</div>
-          <div className="mt-1 text-sm text-slate-600">Your Panworld team and publisher representatives.</div>
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Add contact
-          </Button>
-          <Button type="button">Export</Button>
-        </div>
+    <div>
+      <PwPageHeader title={t("nav.contactDirectory")} subtitle={t("mvpPages.contacts.subtitle")} />
+
+      <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#5C5A55]">
+        {t("mvpPages.contacts.panworldTeam")}
+      </div>
+      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {PANWORLD.map((p) => (
+          <div key={p.email} className="pw-contact-card">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="pw-contact-avatar" style={{ background: p.avatarBg }}>
+                {p.initials}
+              </div>
+              <div>
+                <div className="text-[15px] font-semibold text-[#1A1917]">{p.name}</div>
+                <div className="text-[12.5px] text-[#5C5A55]">{p.role}</div>
+              </div>
+            </div>
+            <div className="mb-3 flex flex-col gap-1.5 text-[13px] text-[#5C5A55]">
+              <div>📞 {p.phone}</div>
+              <div>✉ {p.email}</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                className="pw-wa-btn no-underline"
+                href={`https://wa.me/${digitsOnly(p.phone)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                💬 {t("mvpPages.contacts.whatsapp")}
+              </a>
+              <a className="pw-btn pw-btn-outline pw-btn-sm no-underline" href={`mailto:${p.email}`}>
+                ✉ {t("mvpPages.contacts.email")}
+              </a>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name/email…" />
-          <select
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
-            value={type}
-            onChange={(e) => setType(e.target.value as any)}
-          >
-            <option value="All">All types</option>
-            <option value="ACCOUNT_MANAGER">Account managers</option>
-            <option value="REGIONAL_MANAGER">Regional managers</option>
-            <option value="PUBLISHER_REP">Publisher reps</option>
-          </select>
-          <div className="flex items-center justify-end text-sm text-slate-600">{rows.length} contacts</div>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {rows.map((c) => (
-          <Card key={c.id} className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">{c.name}</div>
-                <div className="mt-1 text-sm text-slate-600">
-                  {typeLabel(c.type)} • {c.title}
-                </div>
-                <div className="mt-2 text-xs text-slate-500">Territories: {c.territories.join(", ")}</div>
+      <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#5C5A55]">
+        {t("mvpPages.contacts.publisherReps")}
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {PUBLISHER_REPS.map((r) => (
+          <div key={r.name} className="pw-contact-card p-3.5">
+            <div className="mb-2.5 flex items-center gap-2.5">
+              <div className={cn("pw-demo-icon mb-0 h-9 w-9 shrink-0 p-0 text-lg", r.pubClass)}>
+                {r.emoji}
               </div>
-              <Button type="button" variant="ghost" size="sm">
-                Message
-              </Button>
-            </div>
-            <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-slate-700 md:grid-cols-2">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <div className="text-xs font-semibold text-slate-600">Email</div>
-                <div className="mt-1">{c.email ?? "—"}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <div className="text-xs font-semibold text-slate-600">WhatsApp</div>
-                <div className="mt-1">{c.whatsapp ?? "—"}</div>
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold text-[#1A1917]">{r.name}</div>
+                <div className="text-[11.5px] text-[#5C5A55]">{r.line}</div>
               </div>
             </div>
-          </Card>
+            <div className="mb-2 text-[12px] text-[#5C5A55]">{r.contact}</div>
+            <a
+              className="pw-wa-btn w-full justify-center text-[11.5px] no-underline"
+              href={
+                r.contact.includes("@")
+                  ? `mailto:${r.contact}`
+                  : `https://wa.me/${digitsOnly(r.contact)}`
+              }
+              target="_blank"
+              rel="noreferrer"
+            >
+              💬 {t("mvpPages.contacts.whatsapp")}
+            </a>
+          </div>
         ))}
       </div>
     </div>
   );
 }
-

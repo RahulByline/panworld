@@ -1,160 +1,172 @@
+import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  BarChart3,
-  BookOpen,
-  Boxes,
-  ClipboardList,
-  FileText,
-  Gauge,
-  GraduationCap,
-  Headphones,
-  LayoutDashboard,
-  Megaphone,
-  Package,
-  ScrollText,
-  Settings,
-  ShieldCheck,
-  ShoppingCart,
-  Sparkles,
-  Ticket,
-  Users,
-  Video,
-} from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { cn } from "../utils/cn";
 import type { UserRole } from "../../types/domain";
 
-type NavItem = { labelKey: string; to: string; gate?: (ctx: GateCtx) => boolean };
 type GateCtx = { role: UserRole; isPublisher: boolean; isAdmin: boolean };
+type NavItem = { to: string; labelKey: string; icon: string; gate?: (ctx: GateCtx) => boolean };
+type NavSection = { phaseKey: string; items: NavItem[] };
 
-const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  "nav.dashboard": LayoutDashboard,
-  "nav.catalogue": Boxes,
-  "nav.wishlist": Sparkles,
-  "nav.curriculumMapping": ScrollText,
-  "nav.demoHub": Gauge,
-  "nav.announcements": Megaphone,
-  "nav.contacts": Users,
-  "nav.training": GraduationCap,
-  "nav.support": Ticket,
-  "nav.webinars": Video,
-  "nav.resources": BookOpen,
-  "nav.samples": Package,
-  "nav.certificates": ShieldCheck,
-  "nav.assessment": ClipboardList,
-  "nav.analytics": BarChart3,
-  "nav.rfq": FileText,
-  "nav.orders": ShoppingCart,
-  "nav.invoices": FileText,
-  "nav.users": Settings,
-  "nav.syncLogs": Headphones,
+const NAV: NavSection[] = [
+  {
+    phaseKey: "navMvp.phase1",
+    items: [
+      { to: "/app", labelKey: "nav.dashboard", icon: "⊞" },
+      { to: "/app/catalogue", labelKey: "nav.catalogueLong", icon: "📚", gate: (c) => !c.isPublisher },
+      { to: "/app/library", labelKey: "nav.libraryBooks", icon: "🏛", gate: (c) => !c.isPublisher },
+      { to: "/app/kits", labelKey: "nav.kits", icon: "🔬", gate: (c) => !c.isPublisher },
+      { to: "/app/curriculum-mapping", labelKey: "nav.curriculumMapping", icon: "🗺", gate: (c) => !c.isPublisher },
+      { to: "/app/demo-hub", labelKey: "nav.demoHub", icon: "▶", gate: (c) => !c.isPublisher },
+      { to: "/app/wishlist", labelKey: "nav.wishlist", icon: "♡", gate: (c) => !c.isPublisher },
+      { to: "/app/announcements", labelKey: "nav.announcements", icon: "📣" },
+      { to: "/app/contacts", labelKey: "nav.contactDirectory", icon: "👥", gate: (c) => !c.isPublisher },
+    ],
+  },
+  {
+    phaseKey: "navMvp.phase2",
+    items: [
+      { to: "/app/training", labelKey: "nav.productTraining", icon: "🎓", gate: (c) => !c.isPublisher },
+      { to: "/app/assessment", labelKey: "nav.assessment", icon: "📊", gate: (c) => !c.isPublisher },
+      { to: "/app/analytics", labelKey: "nav.analytics", icon: "📈" },
+      { to: "/app/webinars", labelKey: "nav.pdWebinars", icon: "🎤", gate: (c) => !c.isPublisher },
+      { to: "/app/resources", labelKey: "nav.resources", icon: "📁", gate: (c) => !c.isPublisher },
+      { to: "/app/samples", labelKey: "nav.samples", icon: "📦", gate: (c) => !c.isPublisher },
+      { to: "/app/certificates", labelKey: "nav.myCertificates", icon: "🏅", gate: (c) => !c.isPublisher },
+      { to: "/app/support", labelKey: "nav.support", icon: "🛟", gate: (c) => !c.isPublisher },
+    ],
+  },
+  {
+    phaseKey: "navMvp.phase3",
+    items: [
+      { to: "/app/rfq", labelKey: "nav.rfqOrders", icon: "📋", gate: (c) => !c.isPublisher },
+      { to: "/app/orders", labelKey: "nav.orderHistory", icon: "📦", gate: (c) => !c.isPublisher },
+      { to: "/app/invoices", labelKey: "nav.invoices", icon: "🧾", gate: (c) => !c.isPublisher },
+      { to: "/app/users", labelKey: "nav.userManagement", icon: "⚙", gate: (c) => !c.isPublisher || c.isAdmin },
+      { to: "/app/sync-logs", labelKey: "nav.syncLogs", icon: "🎧", gate: (c) => c.isAdmin },
+    ],
+  },
+];
+
+function navActive(to: string, pathname: string, search: string): boolean {
+  if (to === "/app") {
+    const p = pathname.replace(/\/$/, "") || "/app";
+    return p === "/app";
+  }
+  const [rawPath, rawQs] = to.split("?");
+  const path = rawPath.replace(/\/$/, "") || "/app";
+  const p = pathname.replace(/\/$/, "") || "/app";
+  const cur = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  if (rawQs) {
+    const want = new URLSearchParams(rawQs);
+    if (p !== path) return false;
+    for (const [k, v] of want.entries()) {
+      if (cur.get(k) !== v) return false;
+    }
+    return true;
+  }
+  if (path === "/app/catalogue") {
+    return p === "/app/catalogue" && !cur.get("tab");
+  }
+  return p === path || p.startsWith(`${path}/`);
+}
+
+function initials(first: string, last: string): string {
+  const a = first.trim().charAt(0);
+  const b = last.trim().charAt(0);
+  return `${a}${b}`.toUpperCase() || "PW";
+}
+
+type SidebarProps = {
+  mobileOpen: boolean;
+  onNavigate: () => void;
 };
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   const { t } = useTranslation();
   const loc = useLocation();
+  const { pathname, search } = loc;
   const user = useAuthStore((s) => s.user)!;
+  const school = useAuthStore((s) => s.school);
 
-  const ctx: GateCtx = {
-    role: user.role,
-    isPublisher: user.role === "PUBLISHER",
-    isAdmin: user.role === "PANWORLD_ADMIN",
-  };
+  const ctx: GateCtx = useMemo(
+    () => ({
+      role: user.role,
+      isPublisher: user.role === "PUBLISHER",
+      isAdmin: user.role === "PANWORLD_ADMIN",
+    }),
+    [user.role],
+  );
 
-  const groups: { headerKey: string; items: NavItem[] }[] = [
-    {
-      headerKey: "nav.dashboard",
-      items: [
-        { labelKey: "nav.dashboard", to: "/app" },
-        { labelKey: "nav.catalogue", to: "/app/catalogue", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.wishlist", to: "/app/wishlist", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.curriculumMapping", to: "/app/curriculum-mapping", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.demoHub", to: "/app/demo-hub", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.announcements", to: "/app/announcements" },
-        { labelKey: "nav.contacts", to: "/app/contacts", gate: (c) => !c.isPublisher },
-      ],
-    },
-    {
-      headerKey: "nav.training",
-      items: [
-        { labelKey: "nav.training", to: "/app/training", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.support", to: "/app/support", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.webinars", to: "/app/webinars", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.resources", to: "/app/resources", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.samples", to: "/app/samples", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.certificates", to: "/app/certificates", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.assessment", to: "/app/assessment", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.analytics", to: "/app/analytics" },
-      ],
-    },
-    {
-      headerKey: "nav.rfq",
-      items: [
-        { labelKey: "nav.rfq", to: "/app/rfq", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.orders", to: "/app/orders", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.invoices", to: "/app/invoices", gate: (c) => !c.isPublisher },
-        { labelKey: "nav.users", to: "/app/users", gate: (c) => !c.isPublisher || c.isAdmin },
-        { labelKey: "nav.syncLogs", to: "/app/sync-logs", gate: (c) => c.isAdmin },
-      ],
-    },
-  ];
+  const roleLabel = useMemo(() => {
+    const r = user.role.replace(/_/g, " ");
+    return r.charAt(0) + r.slice(1).toLowerCase();
+  }, [user.role]);
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 overflow-hidden border-r border-slate-200 bg-white md:block">
-      <div className="px-5 py-5">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-            <img src="/images.png" alt="Panworld Education" className="h-7 w-auto" />
-          </div>
-          <div className="text-xs font-semibold tracking-wider text-slate-500">PANWORLD</div>
+    <aside
+      className={cn(
+        "fixed inset-y-0 z-[100] flex w-[240px] flex-col bg-[#0A3D62] transition-transform duration-300 ease-out md:translate-x-0",
+        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+      )}
+    >
+      <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
+        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-[#E8912D] font-serif text-lg font-normal text-white">
+          P
         </div>
-        <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-          <div className="truncate">
-            <span className="font-medium text-slate-900">
-              {user.firstName} {user.lastName}
-            </span>
-          </div>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">{user.role}</span>
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold leading-tight text-white">Panworld</div>
+          <div className="text-[10px] font-light uppercase tracking-[0.08em] text-white/50">{t("navMvp.portalSubtitle")}</div>
         </div>
       </div>
 
-      <nav className="px-3 pb-5">
-        {groups.map((g) => {
-          const visible = g.items.filter((i) => (i.gate ? i.gate(ctx) : true));
-          if (!visible.length) return null;
+      <nav className="flex-1 overflow-y-auto px-2.5 pb-3 pt-1">
+        {NAV.map((section) => {
+          const items = section.items.filter((i) => (i.gate ? i.gate(ctx) : true));
+          if (!items.length) return null;
           return (
-            <div key={g.headerKey} className="mb-4">
-              <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t(g.headerKey)}</div>
-              <div className="space-y-1">
-                {visible.map((item) => {
-                  const active = loc.pathname === item.to || (item.to !== "/app" && loc.pathname.startsWith(item.to));
-                  const Icon = ICONS[item.labelKey] ?? LayoutDashboard;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={cn(
-                        "group flex items-center justify-between rounded-xl px-3 py-2 text-sm transition",
-                        active ? "bg-slate-900 text-white shadow-sm" : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <Icon size={16} className={cn("shrink-0", active ? "text-white" : "text-slate-500 group-hover:text-slate-700")} />
-                        <span className="truncate">{t(item.labelKey)}</span>
-                      </span>
-                      {item.gate && !item.gate(ctx) ? (
-                        <span className="text-[11px] opacity-70">Locked</span>
-                      ) : null}
-                    </Link>
-                  );
-                })}
+            <div key={section.phaseKey} className="mb-1">
+              <div className="mx-2 mb-1 mt-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/35 first:mt-0">
+                {t(section.phaseKey)}
               </div>
+              {items.map((item) => {
+                const active = navActive(item.to, pathname, search);
+                return (
+                  <Link
+                    key={`${section.phaseKey}-${item.labelKey}`}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={cn(
+                      "mb-px flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2.5 text-[13.5px] no-underline transition-colors",
+                      active
+                        ? "bg-white/15 font-medium text-white"
+                        : "font-normal text-white/65 hover:bg-white/[0.08] hover:text-white",
+                    )}
+                  >
+                    <span className="w-5 shrink-0 text-center text-[15px]">{item.icon}</span>
+                    <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
+                  </Link>
+                );
+              })}
             </div>
           );
         })}
       </nav>
+
+      <div className="border-t border-white/10 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#E8912D] text-[11px] font-semibold text-white">
+            {initials(user.firstName, user.lastName)}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[12.5px] font-medium text-white/80">
+              {user.firstName} {user.lastName}
+            </div>
+            <div className="truncate text-[11px] text-white/40">{school?.name ?? roleLabel}</div>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
-

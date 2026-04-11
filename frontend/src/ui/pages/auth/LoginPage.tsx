@@ -37,7 +37,7 @@ export function LoginPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(Schema),
-    defaultValues: { email: "teacher@panworld-demo.com", password: DEMO_PASSWORD, rememberMe: true },
+    defaultValues: { email: "admin@panworld-demo.com", password: DEMO_PASSWORD, rememberMe: true },
   });
 
   async function onSubmit(values: FormValues) {

@@ -6,12 +6,23 @@ import axios from "axios";
  * and the `/api` segment of the base is dropped → 404 on the real API.
  * We keep `baseURL` ending with `/api/` and strip a leading `/` from paths so requests
  * hit `http://host:port/api/...` correctly.
+ *
+ * **Vite note:** `VITE_API_URL` is inlined at `npm run build` time. Editing `.env` after a
+ * deploy does nothing until you rebuild and redeploy. If unset in production builds, we use
+ * same-origin `/api/` so the SPA calls `https://your-host/api/...` (reverse-proxy to Node).
  */
 function normalizeApiRoot(raw?: string): string {
-  const fallback = "http://localhost:4000";
-  let base = (raw?.trim() || fallback).replace(/\/+$/, "");
-  if (!base.endsWith("/api")) base = `${base}/api`;
-  return `${base}/`;
+  const trimmed = raw?.trim();
+  if (trimmed) {
+    let base = trimmed.replace(/\/+$/, "");
+    if (!base.endsWith("/api")) base = `${base}/api`;
+    return `${base}/`;
+  }
+  // Production bundle: never embed localhost — use API behind the same host (nginx / ingress).
+  if (import.meta.env.PROD) {
+    return "/api/";
+  }
+  return "http://localhost:4000/api/";
 }
 
 export const api = axios.create({

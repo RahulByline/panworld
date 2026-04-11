@@ -5,13 +5,17 @@ import { LanguageToggle } from "../shared/LanguageToggle";
 
 const TITLE_KEYS: { prefix: string; key: string }[] = [
   { prefix: "/admin/schools", key: "admin.titles.schools" },
+  { prefix: "/admin/cms/publisher-access", key: "admin.titles.publisherAccess" },
+  { prefix: "/admin/cms/catalogue", key: "admin.titles.cmsCatalogue" },
+  { prefix: "/admin/cms/announcements", key: "admin.titles.cmsAnnouncements" },
+  { prefix: "/admin/cms/resources", key: "admin.titles.cmsResources" },
+  { prefix: "/admin/account-managers", key: "admin.titles.accountManagers" },
+  { prefix: "/admin/audit-log", key: "admin.titles.auditLog" },
+  { prefix: "/admin/publishers", key: "admin.titles.publishers" },
+  { prefix: "/admin/integrations", key: "admin.titles.integrations" },
   { prefix: "/admin/analytics", key: "admin.titles.analytics" },
   { prefix: "/admin/rfq", key: "admin.titles.rfq" },
   { prefix: "/admin/support", key: "admin.titles.support" },
-  { prefix: "/admin/cms/catalogue", key: "admin.titles.cmsCatalogue" },
-  { prefix: "/admin/cms/announcements", key: "admin.titles.cmsAnnouncements" },
-  { prefix: "/admin/cms/demo-credentials", key: "admin.titles.cmsDemo" },
-  { prefix: "/admin/cms/resources", key: "admin.titles.cmsResources" },
   { prefix: "/admin/whatsapp-logs", key: "admin.titles.whatsapp" },
 ];
 
