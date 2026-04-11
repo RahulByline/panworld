@@ -1,4 +1,7 @@
+export type PublisherAccessCardIconId = "mcgraw" | "kodeit" | "studysync" | "achieve" | "default";
+
 export type PublisherAccessRow = {
+  id: string;
   title: string;
   subtitle?: string;
   type: "Static" | "School-specific";
@@ -8,10 +11,14 @@ export type PublisherAccessRow = {
   lastTone: "ok" | "warn" | "expired";
   action: "test" | "pending" | "renew";
   pendingCount?: number;
+  /** Highlight card (e.g. Panworld-owned publisher). */
+  ourBrand?: boolean;
+  cardIcon: PublisherAccessCardIconId;
 };
 
 export const publisherAccessRows: PublisherAccessRow[] = [
   {
+    id: "pa-mcgraw",
     title: "McGraw Hill ConnectED",
     subtitle: "Inspire Science, Reveal Math, Wonders",
     type: "Static",
@@ -20,8 +27,10 @@ export const publisherAccessRows: PublisherAccessRow[] = [
     lastTested: "8 Apr 2026",
     lastTone: "ok",
     action: "test",
+    cardIcon: "mcgraw",
   },
   {
+    id: "pa-kodeit",
     title: "Kodeit Platform",
     subtitle: "Social Sciences, KG, ICT",
     type: "Static",
@@ -30,8 +39,11 @@ export const publisherAccessRows: PublisherAccessRow[] = [
     lastTested: "7 Apr 2026",
     lastTone: "ok",
     action: "test",
+    ourBrand: true,
+    cardIcon: "kodeit",
   },
   {
+    id: "pa-studysync",
     title: "StudySync",
     subtitle: "School-specific provisioning",
     type: "School-specific",
@@ -41,8 +53,10 @@ export const publisherAccessRows: PublisherAccessRow[] = [
     lastTone: "ok",
     action: "pending",
     pendingCount: 3,
+    cardIcon: "studysync",
   },
   {
+    id: "pa-achieve",
     title: "Achieve3000",
     type: "Static",
     accessLine: "achieve-pan / Achieve3000!",
@@ -50,5 +64,6 @@ export const publisherAccessRows: PublisherAccessRow[] = [
     lastTested: "Expired 5 Apr",
     lastTone: "expired",
     action: "renew",
+    cardIcon: "achieve",
   },
 ];

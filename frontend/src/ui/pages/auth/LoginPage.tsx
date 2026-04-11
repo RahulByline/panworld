@@ -65,7 +65,7 @@ export function LoginPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex justify-center">
-        <img src="/images.png" alt="Panworld Education" className="h-9 w-auto" />
+        <img src="/src/assets/logo.png" alt="Panworld Education" className="h-9 w-auto" />
       </div>
 
       <div className="mt-6 text-center">

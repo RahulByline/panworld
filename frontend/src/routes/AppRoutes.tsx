@@ -56,6 +56,17 @@ import { AdminAccountManagersPage } from "../ui/pages/admin/AdminAccountManagers
 import { AdminPublishersPage } from "../ui/pages/admin/AdminPublishersPage.tsx";
 import { AdminIntegrationsPage } from "../ui/pages/admin/AdminIntegrationsPage.tsx";
 import { AdminAuditLogPage } from "../ui/pages/admin/AdminAuditLogPage.tsx";
+import { AdminCatalogueSegmentPage } from "../ui/pages/admin/AdminCatalogueSegmentPage.tsx";
+import { AdminUsersPage } from "../ui/pages/admin/AdminUsersPage.tsx";
+import { AdminSchoolAssignmentsPage } from "../ui/pages/admin/AdminSchoolAssignmentsPage.tsx";
+import { AdminOrdersPage } from "../ui/pages/admin/AdminOrdersPage.tsx";
+import { AdminInvoicesPage } from "../ui/pages/admin/AdminInvoicesPage.tsx";
+import { AdminSamplesPage } from "../ui/pages/admin/AdminSamplesPage.tsx";
+import { AdminWebinarsPage } from "../ui/pages/admin/AdminWebinarsPage.tsx";
+import { AdminCertificationsPage } from "../ui/pages/admin/AdminCertificationsPage.tsx";
+import { AdminPublisherDashboardPage } from "../ui/pages/admin/AdminPublisherDashboardPage.tsx";
+import { AdminOdooPage } from "../ui/pages/admin/AdminOdooPage.tsx";
+import { AdminSettingsPage } from "../ui/pages/admin/AdminSettingsPage.tsx";
 
 export function AppRoutes() {
   return (
@@ -128,14 +139,27 @@ export function AppRoutes() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="account-managers" element={<AdminAccountManagersPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="assignments" element={<AdminSchoolAssignmentsPage />} />
         <Route path="audit-log" element={<AdminAuditLogPage />} />
         <Route path="publishers" element={<AdminPublishersPage />} />
+        <Route path="publisher-dashboard" element={<AdminPublisherDashboardPage />} />
         <Route path="integrations" element={<AdminIntegrationsPage />} />
+        <Route path="odoo" element={<AdminOdooPage />} />
         <Route path="schools" element={<AdminSchoolsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="rfq" element={<AdminRfqPipelinePage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="invoices" element={<AdminInvoicesPage />} />
+        <Route path="samples" element={<AdminSamplesPage />} />
         <Route path="support" element={<AdminSupportTicketsPage />} />
+        <Route path="webinars" element={<AdminWebinarsPage />} />
+        <Route path="certifications" element={<AdminCertificationsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="cms/catalogue" element={<AdminCmsCataloguePage />} />
+        <Route path="cms/textbooks" element={<AdminCatalogueSegmentPage />} />
+        <Route path="cms/library" element={<AdminCatalogueSegmentPage />} />
+        <Route path="cms/kits" element={<AdminCatalogueSegmentPage />} />
         <Route path="cms/announcements" element={<AdminCmsAnnouncementsPage />} />
         <Route path="cms/publisher-access" element={<AdminPublisherAccessPage />} />
         <Route path="cms/demo-credentials" element={<Navigate to="/admin/cms/publisher-access" replace />} />

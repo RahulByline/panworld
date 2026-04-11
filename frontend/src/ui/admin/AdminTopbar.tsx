@@ -4,6 +4,19 @@ import { useLocation } from "react-router-dom";
 import { LanguageToggle } from "../shared/LanguageToggle";
 
 const TITLE_KEYS: { prefix: string; key: string }[] = [
+  { prefix: "/admin/settings", key: "admin.titles.settings" },
+  { prefix: "/admin/publisher-dashboard", key: "admin.titles.publisherDashboard" },
+  { prefix: "/admin/assignments", key: "admin.titles.assignments" },
+  { prefix: "/admin/certifications", key: "admin.titles.certifications" },
+  { prefix: "/admin/webinars", key: "admin.titles.webinars" },
+  { prefix: "/admin/samples", key: "admin.titles.samples" },
+  { prefix: "/admin/invoices", key: "admin.titles.invoices" },
+  { prefix: "/admin/orders", key: "admin.titles.orders" },
+  { prefix: "/admin/users", key: "admin.titles.users" },
+  { prefix: "/admin/odoo", key: "admin.titles.odoo" },
+  { prefix: "/admin/cms/textbooks", key: "admin.titles.cmsTextbooks" },
+  { prefix: "/admin/cms/library", key: "admin.titles.cmsLibrary" },
+  { prefix: "/admin/cms/kits", key: "admin.titles.cmsKits" },
   { prefix: "/admin/schools", key: "admin.titles.schools" },
   { prefix: "/admin/cms/publisher-access", key: "admin.titles.publisherAccess" },
   { prefix: "/admin/cms/catalogue", key: "admin.titles.cmsCatalogue" },
