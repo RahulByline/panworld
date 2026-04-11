@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { mockProducts } from "../../../mock/data";
 import { useAuthStore } from "../../../store/auth.store";
-import { pubClassFromPublisher, stableEmoji } from "../../../data/school/mvpUi";
 import { PwPageHeader } from "../../panworld/PwPageHeader";
+import { KnowledgeProductCard, knowledgeCardThemeFromId } from "../../school/KnowledgeProductCard";
 import { cn } from "../../utils/cn";
 
 const CURRICULUM_TABS = [
@@ -187,44 +186,29 @@ export function CataloguePage() {
         </div>
       </div>
 
-      <div className="pw-grid-4">
+      <div className="pw-grid-3">
         {slice.map((p) => {
-          const pc = pubClassFromPublisher(p.publisher);
-          const em = stableEmoji(p.name + p.id);
           const unit = country === "KSA" ? "SAR" : "AED";
           const price = `${unit} ${Math.round(p.price * (country === "KSA" ? 1.03 : 1))}`;
           return (
-            <div key={p.id} className="pw-product-card">
-              <Link to={`/app/catalogue/${p.id}`} className="block no-underline">
-                <div className={cn("pw-product-img !h-[120px]", pc)}>
-                  {em}
-                  {p.nccApproved ? (
-                    <div className="pw-product-badges">
-                      <span className="pw-badge pw-badge-ncc">NCC Approved</span>
-                    </div>
-                  ) : null}
-                </div>
-              </Link>
-              <div className="pw-product-body">
-                <Link to={`/app/catalogue/${p.id}`} className="no-underline">
-                  <div className="pw-product-title text-[#1A1917]">{p.name}</div>
-                  <div className="pw-product-sub">
-                    {p.publisher} · {p.grades ?? "—"} · {p.format}
-                  </div>
-                </Link>
-                <div className="pw-product-price">
-                  {price} / {t("mvpPages.catalogue.perStudent")}
-                </div>
-                <div className="pw-product-actions">
-                  <Link to="/app/rfq" className="pw-btn pw-btn-primary pw-btn-xs no-underline">
-                    {t("app.schoolDashboard.rfqCta")}
-                  </Link>
-                  <button type="button" className="pw-btn pw-btn-outline pw-btn-xs">
-                    ♡
-                  </button>
-                </div>
-              </div>
-            </div>
+            <KnowledgeProductCard
+              key={p.id}
+              to={`/app/catalogue/${p.id}`}
+              className="pw-kc-card--catalogue-grid"
+              title={p.name}
+              eyebrow={t("app.schoolDashboard.recentCatalogueEyebrow")}
+              body={`${p.publisher} • ${p.grades ?? "—"} • ${p.format}`}
+              priceLine={`${price} / ${t("mvpPages.catalogue.perStudent")}`}
+              ctaLine={t("app.schoolDashboard.recentCatalogueCta")}
+              theme={knowledgeCardThemeFromId(p.id)}
+              badge={
+                p.nccApproved ? (
+                  <span className="pw-kc-badge">
+                    <span className="pw-badge pw-badge-ncc">NCC Approved</span>
+                  </span>
+                ) : undefined
+              }
+            />
           );
         })}
       </div>

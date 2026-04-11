@@ -1,14 +1,24 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./RequireAuth.tsx";
+import { RequireRole } from "./RequireRole.tsx";
 import { AuthLayout } from "../ui/layouts/AuthLayout.tsx";
 import { AppLayout } from "../ui/layouts/AppLayout.tsx";
+import { AdminLayout } from "../ui/layouts/AdminLayout.tsx";
+import { PanworldAdminRedirect } from "./PanworldAdminRedirect.tsx";
 import { LoginPage } from "../ui/pages/auth/LoginPage.tsx";
 import { ForgotPasswordPage } from "../ui/pages/auth/ForgotPasswordPage.tsx";
 import { ResetPasswordPage } from "../ui/pages/auth/ResetPasswordPage.tsx";
 import { InviteActivationPage } from "../ui/pages/auth/InviteActivationPage.tsx";
 import { ProfileCompletionPage } from "../ui/pages/auth/ProfileCompletionPage.tsx";
-import { DashboardPage } from "../ui/pages/app/DashboardPage.tsx";
+import { SchoolPortalOutlet } from "../ui/shared/SchoolPortalOutlet.tsx";
+import { PortalIndexPage } from "../ui/pages/app/PortalIndexPage.tsx";
+import { SalesSchoolsPage } from "../ui/pages/sales/SalesSchoolsPage.tsx";
+import { SalesPipelinePage } from "../ui/pages/sales/SalesPipelinePage.tsx";
+import { SalesSignalsPage } from "../ui/pages/sales/SalesSignalsPage.tsx";
+import { SalesPerformancePage } from "../ui/pages/sales/SalesPerformancePage.tsx";
 import { CataloguePage } from "../ui/pages/app/CataloguePage.tsx";
+import { LibraryPage } from "../ui/pages/app/LibraryPage.tsx";
+import { KitsPage } from "../ui/pages/app/KitsPage.tsx";
 import { ProductDetailPage } from "../ui/pages/app/ProductDetailPage.tsx";
 import { RfqPage } from "../ui/pages/app/RfqPage.tsx";
 import { RfqDetailPage } from "../ui/pages/app/RfqDetailPage.tsx";
@@ -32,6 +42,20 @@ import { UsersPage } from "../ui/pages/app/UsersPage.tsx";
 import { SyncLogsPage } from "../ui/pages/app/SyncLogsPage.tsx";
 import { CurriculumMappingPage } from "../ui/pages/app/CurriculumMappingPage.tsx";
 import { DemoHubPage } from "../ui/pages/app/DemoHubPage.tsx";
+import { AdminDashboard } from "../ui/pages/admin/AdminDashboard.tsx";
+import { AdminSchoolsPage } from "../ui/pages/admin/AdminSchoolsPage.tsx";
+import { AdminRfqPipelinePage } from "../ui/pages/admin/AdminRfqPipelinePage.tsx";
+import { AdminAnalyticsPage } from "../ui/pages/admin/AdminAnalyticsPage.tsx";
+import { AdminSupportTicketsPage } from "../ui/pages/admin/AdminSupportTicketsPage.tsx";
+import { AdminCmsCataloguePage } from "../ui/pages/admin/AdminCmsCataloguePage.tsx";
+import { AdminCmsAnnouncementsPage } from "../ui/pages/admin/AdminCmsAnnouncementsPage.tsx";
+import { AdminPublisherAccessPage } from "../ui/pages/admin/AdminPublisherAccessPage.tsx";
+import { AdminCmsResourcesPage } from "../ui/pages/admin/AdminCmsResourcesPage.tsx";
+import { AdminWhatsappLogsPage } from "../ui/pages/admin/AdminWhatsappLogsPage.tsx";
+import { AdminAccountManagersPage } from "../ui/pages/admin/AdminAccountManagersPage.tsx";
+import { AdminPublishersPage } from "../ui/pages/admin/AdminPublishersPage.tsx";
+import { AdminIntegrationsPage } from "../ui/pages/admin/AdminIntegrationsPage.tsx";
+import { AdminAuditLogPage } from "../ui/pages/admin/AdminAuditLogPage.tsx";
 
 export function AppRoutes() {
   return (
@@ -48,38 +72,75 @@ export function AppRoutes() {
         path="/app/*"
         element={
           <RequireAuth>
-            <AppLayout />
+            <PanworldAdminRedirect>
+              <AppLayout />
+            </PanworldAdminRedirect>
           </RequireAuth>
         }
       >
-        <Route index element={<DashboardPage />} />
-        <Route path="catalogue" element={<CataloguePage />} />
-        <Route path="catalogue/:id" element={<ProductDetailPage />} />
-        <Route path="wishlist" element={<WishlistPage />} />
-        <Route path="curriculum-mapping" element={<CurriculumMappingPage />} />
-        <Route path="demo-hub" element={<DemoHubPage />} />
-        <Route path="announcements" element={<AnnouncementsPage />} />
-        <Route path="contacts" element={<ContactsPage />} />
-        <Route path="training" element={<TrainingPage />} />
-        <Route path="webinars" element={<WebinarsPage />} />
-        <Route path="resources" element={<ResourcesPage />} />
-        <Route path="samples" element={<SamplesPage />} />
-        <Route path="samples/:id" element={<SampleRequestDetailPage />} />
-        <Route path="samples/:id/follow-up" element={<SampleRequestFollowUpPage />} />
-        <Route path="certificates" element={<CertificatesPage />} />
-        <Route path="assessment" element={<AssessmentPage />} />
-        <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="rfq" element={<RfqPage />} />
-        <Route path="rfq/:id" element={<RfqDetailPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="invoices" element={<InvoicesPage />} />
-        <Route path="support" element={<SupportPage />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="sync-logs" element={<SyncLogsPage />} />
-        <Route
-          path="__placeholder"
-          element={<PlaceholderPage title="Placeholder" description="(kept for quick scaffolding)" />}
-        />
+        <Route index element={<PortalIndexPage />} />
+        <Route path="sales/schools" element={<SalesSchoolsPage />} />
+        <Route path="sales/pipeline" element={<SalesPipelinePage />} />
+        <Route path="sales/signals" element={<SalesSignalsPage />} />
+        <Route path="sales/performance" element={<SalesPerformancePage />} />
+        <Route element={<SchoolPortalOutlet />}>
+          <Route path="catalogue" element={<CataloguePage />} />
+          <Route path="catalogue/:id" element={<ProductDetailPage />} />
+          <Route path="library" element={<LibraryPage />} />
+          <Route path="kits" element={<KitsPage />} />
+          <Route path="wishlist" element={<WishlistPage />} />
+          <Route path="curriculum-mapping" element={<CurriculumMappingPage />} />
+          <Route path="demo-hub" element={<DemoHubPage />} />
+          <Route path="announcements" element={<AnnouncementsPage />} />
+          <Route path="contacts" element={<ContactsPage />} />
+          <Route path="training" element={<TrainingPage />} />
+          <Route path="webinars" element={<WebinarsPage />} />
+          <Route path="resources" element={<ResourcesPage />} />
+          <Route path="samples" element={<SamplesPage />} />
+          <Route path="samples/:id" element={<SampleRequestDetailPage />} />
+          <Route path="samples/:id/follow-up" element={<SampleRequestFollowUpPage />} />
+          <Route path="certificates" element={<CertificatesPage />} />
+          <Route path="assessment" element={<AssessmentPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="rfq" element={<RfqPage />} />
+          <Route path="rfq/:id" element={<RfqDetailPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="support" element={<SupportPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="sync-logs" element={<SyncLogsPage />} />
+          <Route
+            path="__placeholder"
+            element={<PlaceholderPage title="Placeholder" description="(kept for quick scaffolding)" />}
+          />
+        </Route>
+      </Route>
+
+      <Route
+        path="/admin/*"
+        element={
+          <RequireAuth>
+            <RequireRole roles={["PANWORLD_ADMIN"]}>
+              <AdminLayout />
+            </RequireRole>
+          </RequireAuth>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="account-managers" element={<AdminAccountManagersPage />} />
+        <Route path="audit-log" element={<AdminAuditLogPage />} />
+        <Route path="publishers" element={<AdminPublishersPage />} />
+        <Route path="integrations" element={<AdminIntegrationsPage />} />
+        <Route path="schools" element={<AdminSchoolsPage />} />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="rfq" element={<AdminRfqPipelinePage />} />
+        <Route path="support" element={<AdminSupportTicketsPage />} />
+        <Route path="cms/catalogue" element={<AdminCmsCataloguePage />} />
+        <Route path="cms/announcements" element={<AdminCmsAnnouncementsPage />} />
+        <Route path="cms/publisher-access" element={<AdminPublisherAccessPage />} />
+        <Route path="cms/demo-credentials" element={<Navigate to="/admin/cms/publisher-access" replace />} />
+        <Route path="cms/resources" element={<AdminCmsResourcesPage />} />
+        <Route path="whatsapp-logs" element={<AdminWhatsappLogsPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />

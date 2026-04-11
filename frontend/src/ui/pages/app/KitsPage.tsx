@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PwPageHeader } from "../../panworld/PwPageHeader";
 import { cn } from "../../utils/cn";
@@ -121,7 +122,8 @@ function KitCard({
         <div className="mb-2 text-[12px] text-[#5C5A55]">{meta}</div>
         <div className="pw-product-price">{price}</div>
         <div className="pw-product-actions">
-          <Link to="/app/rfq" className="pw-btn pw-btn-primary pw-btn-xs no-underline">
+          <Link to="/app/rfq" className="pw-btn pw-btn-primary pw-btn-xs inline-flex items-center gap-1 no-underline">
+            <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
             {t("app.schoolDashboard.rfqCta")}
           </Link>
           <button type="button" className="pw-btn pw-btn-outline pw-btn-xs">

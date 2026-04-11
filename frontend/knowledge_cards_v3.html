@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Knowledge – School Life</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #eef3ee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 28px;
+      gap: 24px;
+    }
+
+    .page-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.6rem;
+      color: #2d5a30;
+      letter-spacing: 1px;
+      align-self: flex-start;
+      max-width: 1120px;
+      width: 100%;
+    }
+
+    /* ── 2-COLUMN GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+      width: 100%;
+      max-width: 1120px;
+    }
+    .grid .card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      max-width: calc(50% - 11px);
+    }
+
+    /* ════════════════════════════════
+       CARD — matches the image exactly
+       Left: white with text
+       Right: vivid green with blob + stationery items
+    ════════════════════════════════ */
+    .card {
+      display: flex;
+      flex-direction: row;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,.13);
+      min-height: 210px;
+      animation: rise .55s both;
+      cursor: pointer;
+      transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 60px rgba(0,0,0,.18);
+    }
+    .card:nth-child(2) { animation-delay: .09s; }
+    .card:nth-child(3) { animation-delay: .18s; }
+    .card:nth-child(4) { animation-delay: .27s; }
+    .card:nth-child(5) { animation-delay: .36s; }
+
+    /* LEFT WHITE PANEL */
+    .card-left {
+      flex: 1;
+      background: #ffffff;
+      padding: 28px 28px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      /* subtle green blob peek from top-right corner */
+    }
+    /* pale green blob shape in top-right of white panel — exactly like image */
+    .card-left::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 100px; height: 100px;
+      background: #c8e6c9;
+      border-radius: 50%;
+      opacity: .5;
+    }
+
+    .card-subtitle {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #78909c;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #2d5a30;
+      letter-spacing: .5px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .card-body-text {
+      font-size: 12px;
+      font-weight: 300;
+      color: #607d6a;
+      line-height: 1.75;
+      flex: 1;
+    }
+
+    /* nav arrows — exactly like the image: two small circle buttons */
+    .card-nav {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .nav-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #a5d6a7;
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: #388e3c;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .nav-btn:hover { background: #388e3c; border-color: #388e3c; color: #fff; }
+    .nav-btn svg { width: 12px; height: 12px; }
+
+    /* RIGHT GREEN VISUAL PANEL */
+    .card-right {
+      width: 210px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      background: #4caf50; /* vivid green base — exact from image */
+    }
+
+    /* big organic blob — the white/light area from image */
+    .card-right::before {
+      content: '';
+      position: absolute;
+      width: 260px; height: 260px;
+      background: #81c784;
+      border-radius: 50% 60% 55% 50%;
+      top: -80px; right: -80px;
+      opacity: .55;
+    }
+    /* second blob bottom-left */
+    .card-right::after {
+      content: '';
+      position: absolute;
+      width: 130px; height: 130px;
+      background: #a5d6a7;
+      border-radius: 50%;
+      bottom: -40px; left: -30px;
+      opacity: .5;
+    }
+
+    /* ── STATIONERY SCENE ── */
+    .scene {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    /* NOTEBOOK / paper sheet — large white sheet top-right */
+    .sheet {
+      position: absolute;
+      width: 80px; height: 96px;
+      background: #fff;
+      border-radius: 3px;
+      box-shadow: 2px 4px 14px rgba(0,0,0,.18);
+      top: 18px; right: 16px;
+      transform: rotate(3deg);
+    }
+    /* lined paper */
+    .sheet::after {
+      content: '';
+      position: absolute;
+      left: 8px; top: 10px; right: 8px; height: 2px;
+      background: #e8f5e9;
+      box-shadow:
+        0 6px 0 #e8f5e9,
+        0 12px 0 #e8f5e9,
+        0 18px 0 #e8f5e9,
+        0 24px 0 #e8f5e9,
+        0 30px 0 #e8f5e9,
+        0 36px 0 #e8f5e9,
+        0 42px 0 #e8f5e9,
+        0 48px 0 #e8f5e9;
+    }
+
+    /* RED BOOK bottom-left */
+    .book {
+      position: absolute;
+      width: 62px; height: 76px;
+      background: #e53935;
+      border-radius: 3px 6px 6px 3px;
+      bottom: 22px; left: 18px;
+      box-shadow: 3px 4px 12px rgba(0,0,0,.25);
+      transform: rotate(-4deg);
+    }
+    .book-spine {
+      position: absolute;
+      left: 0; top: 0; bottom: 0; width: 8px;
+      background: #b71c1c;
+      border-radius: 3px 0 0 3px;
+    }
+    .book-text {
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.65);
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+    .book-bm {
+      position: absolute;
+      top: 0; right: 10px;
+      width: 7px; height: 18px;
+      background: #fdd835;
+      clip-path: polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);
+    }
+
+    /* RULER — diagonal top area */
+    .ruler {
+      position: absolute;
+      width: 5px; height: 108px;
+      border-radius: 3px;
+      top: 8px; right: 60px;
+      transform: rotate(-35deg);
+      box-shadow: 1px 2px 5px rgba(0,0,0,.2);
+      background: linear-gradient(to bottom, #e53935, #ff7043);
+    }
+
+    /* TRIANGLE RULER */
+    .tri-ruler {
+      position: absolute;
+      top: 12px; right: 22px;
+      width: 0; height: 0;
+      border-left: 22px solid transparent;
+      border-right: 0px solid transparent;
+      border-bottom: 38px solid rgba(33,150,243,.7);
+      filter: drop-shadow(1px 2px 3px rgba(0,0,0,.2));
+      transform: rotate(10deg);
+    }
+
+    /* PENCILS — scattered */
+    .pencil {
+      position: absolute;
+      width: 5px;
+      border-radius: 2px 2px 1px 1px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,.2);
+    }
+    .pc1 { height: 80px; background: #ef5350; top: 20px; left: 28px; transform: rotate(22deg); }
+    .pc2 { height: 74px; background: #42a5f5; top: 28px; left: 40px; transform: rotate(12deg); }
+    .pc3 { height: 78px; background: #fdd835; top: 18px; left: 53px; transform: rotate(4deg);  }
+    .pc4 { height: 72px; background: #66bb6a; top: 24px; left: 66px; transform: rotate(-8deg); }
+    .pc5 { height: 76px; background: #ab47bc; top: 22px; left: 79px; transform: rotate(-18deg);}
+
+    /* MAGNIFIER */
+    .mag {
+      position: absolute;
+      width: 28px; height: 28px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      bottom: 28px; right: 32px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,.25);
+    }
+    .mag::after {
+      content: '';
+      position: absolute;
+      right: -10px; bottom: -10px;
+      width: 5px; height: 13px;
+      background: #fff;
+      border-radius: 3px;
+      transform: rotate(45deg);
+      box-shadow: 1px 1px 3px rgba(0,0,0,.2);
+    }
+
+    /* ERASER */
+    .eraser {
+      position: absolute;
+      width: 22px; height: 11px;
+      background: #ff8a65;
+      border-radius: 3px;
+      bottom: 58px; right: 20px;
+      transform: rotate(-10deg);
+      box-shadow: 1px 2px 4px rgba(0,0,0,.2);
+    }
+    .eraser::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0;
+      width: 6px; height: 100%;
+      background: #ffccbc;
+      border-radius: 3px 0 0 3px;
+    }
+
+    /* ── COLOUR VARIANTS for other cards ── */
+    /* Card 2 – Blue */
+    .card.blue .card-right       { background: #1e88e5; }
+    .card.blue .card-right::before { background: #64b5f6; }
+    .card.blue .card-right::after  { background: #90caf9; }
+    .card.blue .card-left::before  { background: #bbdefb; }
+    .card.blue .card-title         { color: #0d3b6e; }
+    .card.blue .nav-btn            { border-color: #90caf9; color: #1565c0; }
+    .card.blue .nav-btn:hover      { background: #1565c0; border-color: #1565c0; color:#fff; }
+
+    /* Card 3 – Orange */
+    .card.orange .card-right       { background: #f4511e; }
+    .card.orange .card-right::before { background: #ff8a65; }
+    .card.orange .card-right::after  { background: #ffab91; }
+    .card.orange .card-left::before  { background: #ffe0b2; }
+    .card.orange .card-title         { color: #7f2700; }
+    .card.orange .nav-btn            { border-color: #ffab91; color: #bf360c; }
+    .card.orange .nav-btn:hover      { background: #bf360c; border-color: #bf360c; color:#fff; }
+
+    /* Card 4 – Purple */
+    .card.purple .card-right       { background: #8e24aa; }
+    .card.purple .card-right::before { background: #ba68c8; }
+    .card.purple .card-right::after  { background: #ce93d8; }
+    .card.purple .card-left::before  { background: #f3e5f5; }
+    .card.purple .card-title         { color: #4a0072; }
+    .card.purple .nav-btn            { border-color: #ce93d8; color: #6a1b9a; }
+    .card.purple .nav-btn:hover      { background: #6a1b9a; border-color:#6a1b9a; color:#fff; }
+
+    /* Card 5 – Teal */
+    .card.teal .card-right       { background: #00897b; }
+    .card.teal .card-right::before { background: #4db6ac; }
+    .card.teal .card-right::after  { background: #80cbc4; }
+    .card.teal .card-left::before  { background: #e0f2f1; }
+    .card.teal .card-title         { color: #004d40; }
+    .card.teal .nav-btn            { border-color: #80cbc4; color: #00695c; }
+    .card.teal .nav-btn:hover      { background: #00695c; border-color:#00695c; color:#fff; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+      .grid .card:last-child:nth-child(odd) { grid-column: auto; max-width: 100%; }
+      .card-right { width: 150px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-label">Knowledge · School Life</div>
+
+  <div class="grid">
+
+    <!-- ── CARD 1 · GREEN (exact image match) ── -->
+    <div class="card green">
+      <div class="card-left">
+        <div>
+          <div class="card-subtitle">School Life</div>
+          <h2 class="card-title">KNOWLEDGE</h2>
+          <p class="card-body-text">
+            Curated learning resources designed to inspire curiosity, deepen understanding, and fuel a lifelong love of discovery for every student.
+          </p>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn" aria-label="Prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="scene">
+          <!-- sheet top-right -->
+          <div class="sheet"></div>
+          <!-- book bottom-left -->
+          <div class="book">
+            <div class="book-spine"></div>
+            <div class="book-text">BOOK</div>
+            <div class="book-bm"></div>
+          </div>
+          <!-- ruler diagonal -->
+          <div class="ruler"></div>
+          <!-- triangle ruler -->
+          <div class="tri-ruler"></div>
+          <!-- pencils -->
+          <div class="pencil pc1"></div>
+          <div class="pencil pc2"></div>
+          <div class="pencil pc3"></div>
+          <div class="pencil pc4"></div>
+          <div class="pencil pc5"></div>
+          <!-- magnifier -->
+          <div class="mag"></div>
+          <!-- eraser -->
+          <div class="eraser"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CARD 2 · BLUE ── -->
+    <div class="card blue">
+      <div class="card-left">
+        <div>
+          <div class="card-subtitle">Core Skills</div>
+          <h2 class="card-title">STUDY<br>MASTERY</h2>
+          <p class="card-body-text">
+            Smart techniques to retain more, focus better, and achieve consistent academic results every semester.
+          </p>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn" aria-label="Prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="scene">
+          <div class="sheet"></div>
+          <div class="book" style="background:#1565c0"><div class="book-spine" style="background:#0d3b6e"></div><div class="book-text">BOOK</div><div class="book-bm" style="background:#e3f2fd"></div></div>
+          <div class="ruler" style="background:linear-gradient(to bottom,#fff,#90caf9)"></div>
+          <div class="tri-ruler" style="border-bottom-color:rgba(255,193,7,.8)"></div>
+          <div class="pencil pc1" style="background:#fff"></div>
+          <div class="pencil pc2" style="background:#fdd835"></div>
+          <div class="pencil pc3" style="background:#fff"></div>
+          <div class="pencil pc4" style="background:#bbdefb"></div>
+          <div class="pencil pc5" style="background:#e3f2fd"></div>
+          <div class="mag"></div>
+          <div class="eraser" style="background:#fff"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CARD 3 · ORANGE ── -->
+    <div class="card orange">
+      <div class="card-left">
+        <div>
+          <div class="card-subtitle">Creativity</div>
+          <h2 class="card-title">ART &amp;<br>EXPRESSION</h2>
+          <p class="card-body-text">
+            Unlock creative potential through drawing, design, and visual storytelling that inspires bold, original ideas.
+          </p>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn" aria-label="Prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="scene">
+          <div class="sheet"></div>
+          <div class="book" style="background:#fff"><div class="book-spine" style="background:#ffccbc"></div><div class="book-text" style="color:#f4511e">BOOK</div><div class="book-bm" style="background:#f4511e"></div></div>
+          <div class="ruler" style="background:linear-gradient(to bottom,#fff,#ffccbc)"></div>
+          <div class="tri-ruler" style="border-bottom-color:rgba(255,255,255,.8)"></div>
+          <div class="pencil pc1" style="background:#fff"></div>
+          <div class="pencil pc2" style="background:#fdd835"></div>
+          <div class="pencil pc3" style="background:#ffccbc"></div>
+          <div class="pencil pc4" style="background:#fff"></div>
+          <div class="pencil pc5" style="background:#ffe0b2"></div>
+          <div class="mag"></div>
+          <div class="eraser" style="background:#fff;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CARD 4 · PURPLE ── -->
+    <div class="card purple">
+      <div class="card-left">
+        <div>
+          <div class="card-subtitle">Research</div>
+          <h2 class="card-title">DEEP<br>INQUIRY</h2>
+          <p class="card-body-text">
+            Build skills that empower independent thinking and evidence-based conclusions across every discipline.
+          </p>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn" aria-label="Prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="scene">
+          <div class="sheet"></div>
+          <div class="book" style="background:#6a1b9a"><div class="book-spine" style="background:#4a0072"></div><div class="book-text">BOOK</div><div class="book-bm" style="background:#e1bee7"></div></div>
+          <div class="ruler" style="background:linear-gradient(to bottom,#fff,#e1bee7)"></div>
+          <div class="tri-ruler" style="border-bottom-color:rgba(255,235,59,.8)"></div>
+          <div class="pencil pc1" style="background:#fff"></div>
+          <div class="pencil pc2" style="background:#fdd835"></div>
+          <div class="pencil pc3" style="background:#e1bee7"></div>
+          <div class="pencil pc4" style="background:#fff"></div>
+          <div class="pencil pc5" style="background:#f3e5f5"></div>
+          <div class="mag"></div>
+          <div class="eraser" style="background:#e1bee7"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CARD 5 · TEAL ── -->
+    <div class="card teal">
+      <div class="card-left">
+        <div>
+          <div class="card-subtitle">Science</div>
+          <h2 class="card-title">EXPLORE &amp;<br>DISCOVER</h2>
+          <p class="card-body-text">
+            Hands-on experiments and guided inquiry that make complex scientific concepts tangible and exciting.
+          </p>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn" aria-label="Prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="scene">
+          <div class="sheet"></div>
+          <div class="book" style="background:#004d40"><div class="book-spine" style="background:#00251a"></div><div class="book-text">BOOK</div><div class="book-bm" style="background:#b2dfdb"></div></div>
+          <div class="ruler" style="background:linear-gradient(to bottom,#fff,#b2dfdb)"></div>
+          <div class="tri-ruler" style="border-bottom-color:rgba(255,235,59,.75)"></div>
+          <div class="pencil pc1" style="background:#fff"></div>
+          <div class="pencil pc2" style="background:#fdd835"></div>
+          <div class="pencil pc3" style="background:#b2dfdb"></div>
+          <div class="pencil pc4" style="background:#fff"></div>
+          <div class="pencil pc5" style="background:#e0f2f1"></div>
+          <div class="mag"></div>
+          <div class="eraser" style="background:#b2dfdb"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.grid -->
+
+</body>
+</html>

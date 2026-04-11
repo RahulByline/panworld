@@ -7,10 +7,10 @@ import type { UserRole } from "../../../../types/domain";
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-[#E2E0D9] bg-[#F5F4F0] p-4 shadow-sm">
-      <div className="text-[11.5px] font-medium uppercase tracking-wide text-[#5C5A55]">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-[#1A1917]">{value}</div>
-      {hint ? <div className="mt-1 text-xs text-[#5C5A55]">{hint}</div> : null}
+    <div className="rounded-2xl border border-[var(--pw-border)] bg-[var(--pw-muted)] p-4 shadow-sm">
+      <div className="text-[11.5px] font-medium uppercase tracking-wide text-[var(--pw-text-secondary)]">{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-[var(--pw-text)]">{value}</div>
+      {hint ? <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">{hint}</div> : null}
     </div>
   );
 }
@@ -126,17 +126,17 @@ export function RoleDashboard({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-sm text-[#5C5A55]">{contextLabel}</div>
-          <div className="mt-1 font-serif text-2xl font-semibold text-[#1A1917]">{headline}</div>
-          <div className="mt-1 text-sm text-[#5C5A55]">
+          <div className="text-sm text-[var(--pw-text-secondary)]">{contextLabel}</div>
+          <div className="mt-1 font-serif text-2xl font-semibold text-[var(--pw-text)]">{headline}</div>
+          <div className="mt-1 text-sm text-[var(--pw-text-secondary)]">
             {country ? (country === "KSA" ? "Saudi configuration (Arabic default, VAT 15%, NCC highlights)" : "UAE configuration (English default, VAT 5%)") : "Partner demo mode"}
           </div>
         </div>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" className="border-[#E2E0D9] bg-white text-[#1A1917] hover:bg-[#F5F4F0]">
+          <Button type="button" variant="secondary" className="border-[var(--pw-border)] bg-white text-[var(--pw-text)] hover:bg-[var(--pw-muted)]">
             Export
           </Button>
-          <Button type="button" className="bg-[#0A3D62] hover:bg-[#1A5276]">
+          <Button type="button" className="bg-[var(--pw-brand)] hover:bg-[var(--pw-brand-deep)]">
             Quick action
           </Button>
         </div>
@@ -149,13 +149,13 @@ export function RoleDashboard({
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <Card className="border-[#E2E0D9] bg-white p-5 shadow-sm lg:col-span-2">
+        <Card className="border-[var(--pw-border)] bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-[#1A1917]">Usage & training trend</div>
-              <div className="mt-1 text-xs text-[#5C5A55]">Last 14 days — used across dashboards for consistency.</div>
+              <div className="text-sm font-semibold text-[var(--pw-text)]">Usage & training trend</div>
+              <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">Last 14 days — used across dashboards for consistency.</div>
             </div>
-            <div className="text-xs text-[#9A9890]">{country === "KSA" ? "VAT 15%" : country === "UAE" ? "VAT 5%" : "—"}</div>
+            <div className="text-xs text-[var(--pw-text-muted)]">{country === "KSA" ? "VAT 15%" : country === "UAE" ? "VAT 5%" : "—"}</div>
           </div>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -164,30 +164,30 @@ export function RoleDashboard({
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Area type="monotone" dataKey="usage" stroke="#0A3D62" fill="#0A3D62" fillOpacity={0.12} />
-                <Area type="monotone" dataKey="training" stroke="#1A5276" fill="#1A5276" fillOpacity={0.1} />
+                <Area type="monotone" dataKey="usage" stroke="#1e3a8a" fill="#1e3a8a" fillOpacity={0.12} />
+                <Area type="monotone" dataKey="training" stroke="#2563eb" fill="#2563eb" fillOpacity={0.1} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="border-[#E2E0D9] bg-white p-5 shadow-sm">
-          <div className="text-sm font-semibold text-[#1A1917]">Top products</div>
-          <div className="mt-1 text-xs text-[#5C5A55]">AI-style recommendations, country-aware.</div>
+        <Card className="border-[var(--pw-border)] bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold text-[var(--pw-text)]">Top products</div>
+          <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">AI-style recommendations, country-aware.</div>
           <div className="mt-4 space-y-2">
             {topProducts.map((p) => (
-              <div key={p.rank} className="rounded-xl border border-[#E2E0D9] bg-white px-3 py-3">
+              <div key={p.rank} className="rounded-xl border border-[var(--pw-border)] bg-white px-3 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[#1A1917]">
+                    <div className="truncate text-sm font-semibold text-[var(--pw-text)]">
                       {p.rank}. {p.name}
                     </div>
-                    <div className="mt-1 text-xs text-[#5C5A55]">{p.publisher}</div>
+                    <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">{p.publisher}</div>
                   </div>
-                  <div className="shrink-0 text-right text-xs font-semibold text-[#1A1917]">{p.price.toFixed(2)}</div>
+                  <div className="shrink-0 text-right text-xs font-semibold text-[var(--pw-text)]">{p.price.toFixed(2)}</div>
                 </div>
                 <div className="mt-3">
-                  <Button type="button" size="sm" variant="secondary" className="border-[#E2E0D9] bg-white hover:bg-[#F5F4F0]">
+                  <Button type="button" size="sm" variant="secondary" className="border-[var(--pw-border)] bg-white hover:bg-[var(--pw-muted)]">
                     Open
                   </Button>
                 </div>
@@ -199,9 +199,9 @@ export function RoleDashboard({
 
       {role === "HOD" || role === "MANAGEMENT" || role === "CEO" || role === "PANWORLD_ADMIN" ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <Card className="border-[#E2E0D9] bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="text-sm font-semibold text-[#1A1917]">Completion & engagement by department</div>
-            <div className="mt-1 text-xs text-[#5C5A55]">Used on leadership dashboards.</div>
+          <Card className="border-[var(--pw-border)] bg-white p-5 shadow-sm lg:col-span-2">
+            <div className="text-sm font-semibold text-[var(--pw-text)]">Completion & engagement by department</div>
+            <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">Used on leadership dashboards.</div>
             <div className="mt-4 h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={deptBars}>
@@ -209,28 +209,28 @@ export function RoleDashboard({
                   <XAxis dataKey="dept" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="completion" fill="#0A3D62" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="engagement" fill="#1A5276" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="completion" fill="#1e3a8a" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="engagement" fill="#2563eb" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          <Card className="border-[#E2E0D9] bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-[#1A1917]">Operational queue</div>
-            <div className="mt-1 text-xs text-[#5C5A55]">RFQs, invoices, tickets.</div>
-            <div className="mt-4 space-y-2 text-sm text-[#1A1917]">
-              <div className="rounded-xl border border-[#E2E0D9] bg-[#F5F4F0] px-3 py-2">
+          <Card className="border-[var(--pw-border)] bg-white p-5 shadow-sm">
+            <div className="text-sm font-semibold text-[var(--pw-text)]">Operational queue</div>
+            <div className="mt-1 text-xs text-[var(--pw-text-secondary)]">RFQs, invoices, tickets.</div>
+            <div className="mt-4 space-y-2 text-sm text-[var(--pw-text)]">
+              <div className="rounded-xl border border-[var(--pw-border)] bg-[var(--pw-muted)] px-3 py-2">
                 RFQs: <span className="font-semibold">{rfqs.slice(0, 4).length}</span> requiring review
               </div>
-              <div className="rounded-xl border border-[#E2E0D9] bg-[#F5F4F0] px-3 py-2">
+              <div className="rounded-xl border border-[var(--pw-border)] bg-[var(--pw-muted)] px-3 py-2">
                 Invoices: <span className="font-semibold">{invoices.filter((x) => x.status === "OUTSTANDING").length}</span> outstanding
               </div>
-              <div className="rounded-xl border border-[#E2E0D9] bg-[#F5F4F0] px-3 py-2">
+              <div className="rounded-xl border border-[var(--pw-border)] bg-[var(--pw-muted)] px-3 py-2">
                 Tickets: <span className="font-semibold">{mockTickets.filter((x) => x.status !== "RESOLVED").length}</span> open/in progress
               </div>
               <div className="mt-3">
-                <Button type="button" variant="secondary" size="sm" className="border-[#E2E0D9] bg-white hover:bg-[#F5F4F0]">
+                <Button type="button" variant="secondary" size="sm" className="border-[var(--pw-border)] bg-white hover:bg-[var(--pw-muted)]">
                   Open queue
                 </Button>
               </div>

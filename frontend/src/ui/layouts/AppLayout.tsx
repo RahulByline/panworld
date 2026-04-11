@@ -13,12 +13,7 @@ export function AppLayout() {
   const isSales = user?.role === "SALES_ADMIN";
 
   return (
-    <div
-      className={cn(
-        "min-h-screen",
-        isSales ? "pw-app pw-sales-app bg-[#EEF2F5]" : "pw-app bg-[#F0EDE8]",
-      )}
-    >
+    <div className={cn("min-h-screen pw-app bg-[var(--pw-page)]")}>
       {isSales ? (
         <SalesSidebar mobileOpen={mobileOpen} onNavigate={() => setMobileOpen(false)} />
       ) : (

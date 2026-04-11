@@ -1,112 +1,127 @@
 import { Link, useParams } from "react-router-dom";
-import { Card } from "../../components/Card";
-import { Button } from "../../components/Button";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { mockProducts } from "../../../mock/data";
+import { useAuthStore } from "../../../store/auth.store";
+import { KnowledgeProductCard, knowledgeCardThemeFromId } from "../../school/KnowledgeProductCard";
 
 export function ProductDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
+  const school = useAuthStore((s) => s.school);
+  const country = school?.country;
   const p = mockProducts.find((x) => x.id === id) ?? null;
 
   if (!p) {
     return (
-      <Card className="p-6">
-        <div className="text-sm font-semibold">Product not found</div>
+      <div className="pw-card p-6">
+        <div className="text-sm font-semibold text-[var(--pw-text)]">{t("mvpPages.catalogue.notFoundTitle")}</div>
         <div className="mt-3">
-          <Link to="/app/catalogue">
-            <Button type="button" variant="secondary">
-              Back to catalogue
-            </Button>
+          <Link to="/app/catalogue" className="pw-btn pw-btn-outline no-underline">
+            {t("mvpPages.catalogue.backToCatalogue")}
           </Link>
         </div>
-      </Card>
+      </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-xs text-slate-500">{p.sku}</div>
-          <div className="mt-1 text-2xl font-semibold text-slate-900">{p.name}</div>
-          <div className="mt-1 text-sm text-slate-600">{p.publisher}</div>
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Access demo
-          </Button>
-          <Button type="button">Add to RFQ</Button>
-        </div>
-      </div>
+  const unit = country === "KSA" ? "SAR" : "AED";
+  const priceNum = Math.round(p.price * (country === "KSA" ? 1.03 : 1));
+  const price = `${unit} ${priceNum}`;
+  const priceLine = `${price} / ${t("mvpPages.catalogue.perStudent")}`;
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <Card className="p-5 lg:col-span-2">
-          <div className="text-sm font-semibold text-slate-900">Overview</div>
-          <div className="mt-2 text-sm text-slate-700">
-            Product detail including curriculum alignment, country editions, and key differentiation points.
-          </div>
+  return (
+    <div className="space-y-5">
+      <Link
+        to="/app/catalogue"
+        className="inline-block text-sm font-medium text-[var(--pw-text-secondary)] no-underline hover:text-[var(--pw-text)]"
+      >
+        ← {t("mvpPages.catalogue.backToCatalogue")}
+      </Link>
+
+      <KnowledgeProductCard
+        className="pw-kc-card--detail-hero"
+        title={p.name}
+        eyebrow={t("app.schoolDashboard.recentCatalogueEyebrow")}
+        body={`${p.publisher} • ${p.grades ?? "—"} • ${p.format} • ${p.curriculum ?? "—"}`}
+        priceLine={priceLine}
+        ctaLine={t("app.schoolDashboard.recentCatalogueCta")}
+        theme={knowledgeCardThemeFromId(p.id)}
+      />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="pw-card lg:col-span-2">
+          <div className="text-sm font-semibold text-[var(--pw-text)]">{t("mvpPages.catalogue.detailOverview")}</div>
+          <div className="mt-2 text-sm text-[var(--pw-text-secondary)]">{t("mvpPages.catalogue.detailOverviewBody")}</div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Type</div>
-              <div className="mt-1 font-semibold text-slate-900">{p.type}</div>
+            <div className="rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] p-3">
+              <div className="text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailType")}</div>
+              <div className="mt-1 font-semibold text-[var(--pw-text)]">{p.type}</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Edition</div>
-              <div className="mt-1 font-semibold text-slate-900">{p.edition}</div>
+            <div className="rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] p-3">
+              <div className="text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailEdition")}</div>
+              <div className="mt-1 font-semibold text-[var(--pw-text)]">{p.edition}</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Grades</div>
-              <div className="mt-1 font-semibold text-slate-900">{p.grades ?? "—"}</div>
+            <div className="rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] p-3">
+              <div className="text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailGrades")}</div>
+              <div className="mt-1 font-semibold text-[var(--pw-text)]">{p.grades ?? "—"}</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Format</div>
-              <div className="mt-1 font-semibold text-slate-900">{p.format}</div>
+            <div className="rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] p-3">
+              <div className="text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailFormat")}</div>
+              <div className="mt-1 font-semibold text-[var(--pw-text)]">{p.format}</div>
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="text-sm font-semibold text-slate-900">Curriculum mapping</div>
-            <div className="mt-1 text-xs text-slate-600">
-              Shows why this product is recommended for your curriculum and grade range.
-            </div>
-            <ul className="mt-3 list-disc pl-5 text-sm text-slate-700">
-              <li>Standards alignment coverage: 82%</li>
-              <li>Teacher training readiness: strong</li>
-              <li>Country relevance: {p.countryRelevance.join(", ")}</li>
+          <div className="mt-5 rounded-[var(--pw-radius-lg)] border border-[var(--pw-border)] bg-white p-4">
+            <div className="text-sm font-semibold text-[var(--pw-text)]">{t("mvpPages.catalogue.detailCurriculumTitle")}</div>
+            <div className="mt-1 text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailCurriculumSub")}</div>
+            <ul className="mt-3 list-disc ps-5 text-sm text-[var(--pw-text-secondary)]">
+              <li>{t("mvpPages.catalogue.detailBulletStandards")}</li>
+              <li>{t("mvpPages.catalogue.detailBulletTraining")}</li>
+              <li>
+                {t("mvpPages.catalogue.detailBulletRegions")}: {p.countryRelevance.join(", ")}
+              </li>
             </ul>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-5">
-          <div className="text-sm font-semibold text-slate-900">Pricing</div>
-          <div className="mt-2 text-3xl font-semibold text-slate-900">{p.price.toFixed(2)}</div>
-          <div className="mt-1 text-xs text-slate-600">Indicative price. Final pricing confirmed via quotation.</div>
+        <div className="pw-card">
+          <div className="text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailSku")}</div>
+          <div className="text-sm font-semibold text-[var(--pw-text)]">{p.sku}</div>
+
+          <div className="mt-4 text-sm font-semibold text-[var(--pw-text)]">{t("mvpPages.catalogue.detailPricing")}</div>
+          <div className="mt-1 text-2xl font-semibold text-[var(--pw-text)]">{price}</div>
+          <div className="mt-1 text-xs text-[var(--pw-text-muted)]">{t("mvpPages.catalogue.detailPriceNote")}</div>
 
           <div className="mt-4 space-y-2 text-sm">
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <span className="text-slate-600">NCC approved</span>
-              <span className="font-semibold text-slate-900">{p.nccApproved ? "Yes" : "No"}</span>
+            <div className="flex items-center justify-between rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] px-3 py-2">
+              <span className="text-[var(--pw-text-secondary)]">{t("mvpPages.catalogue.detailNcc")}</span>
+              <span className="font-semibold text-[var(--pw-text)]">{p.nccApproved ? t("mvpPages.catalogue.yes") : t("mvpPages.catalogue.no")}</span>
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <span className="text-slate-600">Curriculum</span>
-              <span className="font-semibold text-slate-900">{p.curriculum}</span>
+            <div className="flex items-center justify-between rounded-[var(--pw-radius)] border border-[var(--pw-border)] bg-[var(--pw-muted)] px-3 py-2">
+              <span className="text-[var(--pw-text-secondary)]">{t("mvpPages.catalogue.detailCurriculumLabel")}</span>
+              <span className="font-semibold text-[var(--pw-text)]">{p.curriculum}</span>
             </div>
           </div>
 
           <div className="mt-5 flex flex-col gap-2">
-            <Button type="button">Request sample</Button>
-            <Button type="button" variant="secondary">
-              Add to wishlist
-            </Button>
-            <Link to="/app/catalogue">
-              <Button type="button" variant="ghost" className="w-full">
-                Back
-              </Button>
+            <button type="button" className="pw-btn pw-btn-primary">
+              {t("mvpPages.catalogue.accessDemo")}
+            </button>
+            <Link to="/app/rfq" className="pw-btn pw-btn-primary no-underline inline-flex items-center justify-center gap-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {t("mvpPages.catalogue.addRfq")}
             </Link>
+            <button type="button" className="pw-btn pw-btn-outline">
+              {t("mvpPages.catalogue.requestSample")}
+            </button>
+            <button type="button" className="pw-btn pw-btn-outline">
+              {t("mvpPages.catalogue.addWishlist")}
+            </button>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
 }
-

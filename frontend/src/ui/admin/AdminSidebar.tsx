@@ -50,36 +50,45 @@ const AUTO: NavItem[] = [{ to: "/admin/whatsapp-logs", labelKey: "admin.nav.what
 
 function Section({ titleKey }: { titleKey: string }) {
   const { t } = useTranslation();
-  return (
-    <div className="mb-1 mt-3 px-4 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/30 first:mt-0">
-      {t(titleKey)}
-    </div>
-  );
+  return <div className="pw-nav-section-label">{t(titleKey)}</div>;
 }
 
 function NavBlock({ items }: { items: NavItem[] }) {
   const { t } = useTranslation();
   return (
-    <nav className="space-y-px px-2.5">
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === "/admin"}
-          className={({ isActive }) =>
-            cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-[13.5px] font-normal transition-colors",
-              isActive
-                ? "bg-white/[0.13] font-medium text-white"
-                : "text-white/60 hover:bg-white/[0.07] hover:text-white",
-            )
-          }
-        >
-          <item.icon size={15} className="w-5 shrink-0 text-center opacity-90" />
-          <span className="truncate">{t(item.labelKey)}</span>
-        </NavLink>
-      ))}
-    </nav>
+    <>
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/admin"}
+            className={({ isActive }) =>
+              cn(
+                "mb-0.5 flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] leading-snug no-underline transition-colors",
+                isActive
+                  ? "bg-[var(--pw-muted)] font-medium text-[var(--pw-text)] ring-1 ring-[var(--pw-border)]"
+                  : "font-normal text-[var(--pw-text-secondary)] hover:bg-[var(--pw-muted)] hover:text-[var(--pw-text)]",
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon
+                  size={16}
+                  className={cn(
+                    "w-5 shrink-0",
+                    isActive ? "text-[var(--pw-logo-blue)]" : "text-[var(--pw-text-muted)]",
+                  )}
+                />
+                <span className="truncate">{t(item.labelKey)}</span>
+              </>
+            )}
+          </NavLink>
+        );
+      })}
+    </>
   );
 }
 
@@ -90,18 +99,22 @@ export function AdminSidebar() {
   const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "A";
 
   return (
-    <aside className="fixed left-0 top-0 z-[100] flex h-screen w-[240px] flex-col bg-[#071E36]">
-      <div className="flex items-center gap-2.5 border-b border-white/[0.08] px-5 py-5">
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg font-['DM_Serif_Display',serif] text-lg text-white">
-          <img src="/images.png" alt="Panworld Admin" className="h-7 w-auto" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-[13px] font-semibold leading-tight text-white">Panworld Admin</div>
-          <div className="text-[10px] font-light uppercase tracking-[0.08em] text-white/40">Portal Management</div>
+    <aside className="pw-school-sidebar fixed left-0 top-0 z-[100] flex h-screen w-[240px] flex-col">
+      <div className="border-b border-[var(--pw-border)] bg-white/50 px-5 py-4 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden rounded-xl">
+            <img src="/images.png" alt="Panworld Admin" className="h-7 w-auto max-w-full object-contain" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold leading-tight text-[var(--pw-text)]">Panworld Admin</div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--pw-text-muted)]">
+              Portal Management
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto px-2.5 pb-4 pt-3">
         <Section titleKey="admin.nav.sectionOverview" />
         <NavBlock items={OVERVIEW} />
         <Section titleKey="admin.nav.sectionSchools" />
@@ -114,22 +127,22 @@ export function AdminSidebar() {
         <NavBlock items={AUTO} />
       </div>
 
-      <div className="border-t border-white/[0.08] px-4 py-3">
+      <div className="border-t border-[var(--pw-border)] bg-white/40 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#512DA8] text-[11px] font-semibold text-white">
+          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[var(--pw-brand)] text-[11px] font-semibold text-white ring-2 ring-[var(--pw-brand-light)]">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-medium text-white/80">
+            <div className="truncate text-[12.5px] font-medium text-[var(--pw-text)]">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-[11px] text-white/40">{t("admin.nav.roleLabel")}</div>
+            <div className="truncate text-[11px] text-[var(--pw-text-muted)]">{t("admin.nav.roleLabel")}</div>
           </div>
         </div>
         <button
           type="button"
           onClick={() => void logout()}
-          className="mt-3 w-full rounded-md border border-white/10 py-1.5 text-center text-xs text-white/70 hover:bg-white/5"
+          className="mt-3 w-full rounded-md border border-[var(--pw-border)] bg-white py-1.5 text-center text-xs font-medium text-[var(--pw-text-secondary)] transition hover:bg-[var(--pw-muted)]"
         >
           {t("admin.nav.signOut")}
         </button>

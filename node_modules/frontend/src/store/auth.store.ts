@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import axios from "axios";
 import type { School, User } from "../types/domain";
-import { demoAccounts } from "../mock/accounts";
+import { api, setAccessToken } from "../services/api";
 
 type AuthState = {
   user: User | null;
@@ -15,41 +15,140 @@ type AuthState = {
   setLanguage: (lng: "en" | "ar") => void;
 };
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      school: null,
-      publisher: null,
-      bootstrapped: false,
+function mapUser(u: {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: User["role"];
+  schoolId: string | null;
+  publisherId: string | null;
+  preferredLang: "en" | "ar";
+  impersonatedById?: string | null;
+}): User {
+  return {
+    id: u.id,
+    email: u.email,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    role: u.role,
+    schoolId: u.schoolId ?? null,
+    publisherId: u.publisherId ?? null,
+    preferredLang: u.preferredLang,
+    impersonatedById: u.impersonatedById ?? null,
+  };
+}
 
-      login: async (email, password, rememberMe) => {
-        void rememberMe;
-        const acct = demoAccounts.find((a) => a.email.toLowerCase() === email.toLowerCase()) ?? null;
-        if (!acct || acct.password !== password) throw new Error("Invalid credentials");
-        set({ user: acct.user, school: acct.school, publisher: acct.publisher });
-      },
+function mapSchool(s: {
+  id: string;
+  name: string;
+  country: School["country"];
+  curriculumType: string;
+  purchaseStatus: School["purchaseStatus"];
+  preferredLang: "en" | "ar";
+  enabledModules: Record<string, unknown>;
+  vatRate: string | number;
+} | null): School | null {
+  if (!s) return null;
+  return {
+    id: s.id,
+    name: s.name,
+    country: s.country,
+    curriculumType: s.curriculumType,
+    purchaseStatus: s.purchaseStatus,
+    preferredLang: s.preferredLang,
+    enabledModules:
+      s.enabledModules && typeof s.enabledModules === "object" ? s.enabledModules : {},
+    vatRate: s.vatRate,
+  };
+}
 
-      bootstrap: async () => {
-        // Static demo: state is rehydrated from localStorage by zustand persist.
-        // We just mark the app ready.
-        set({ bootstrapped: true });
-      },
+function apiErrorMessage(e: unknown, fallback: string) {
+  if (axios.isAxiosError(e)) {
+    const msg = (e.response?.data as { error?: { message?: string } })?.error?.message;
+    if (msg) return msg;
+  }
+  if (e instanceof Error && e.message) return e.message;
+  return fallback;
+}
 
-      logout: async () => {
-        set({ user: null, school: null, publisher: null });
-      },
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  school: null,
+  publisher: null,
+  bootstrapped: false,
 
-      setLanguage: (lng) => {
-        const { user } = get();
-        if (!user) return;
-        set({ user: { ...user, preferredLang: lng } });
-      },
-    }),
-    {
-      name: "pw_auth",
-      partialize: (s) => ({ user: s.user, school: s.school, publisher: s.publisher }),
-    },
-  ),
-);
+  login: async (email, password) => {
+    try {
+      const res = await api.post<{
+        ok: boolean;
+        data: {
+          accessToken: string;
+          user: Parameters<typeof mapUser>[0];
+          school: Parameters<typeof mapSchool>[0];
+          publisher: { id: string; name: string } | null;
+        };
+      }>("/auth/login", { email, password });
+      if (!res.data?.ok || !res.data.data?.accessToken) throw new Error("Login failed");
+      const d = res.data.data;
+      setAccessToken(d.accessToken);
+      set({
+        user: mapUser(d.user),
+        school: mapSchool(d.school),
+        publisher: d.publisher,
+      });
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, "Login failed"));
+    }
+  },
 
+  bootstrap: async () => {
+    try {
+      const refreshRes = await api.post<{ ok: boolean; data: { accessToken: string } }>("/auth/refresh");
+      if (refreshRes.data?.ok && refreshRes.data.data?.accessToken) {
+        setAccessToken(refreshRes.data.data.accessToken);
+        try {
+          const meRes = await api.get<{
+            ok: boolean;
+            data: {
+              user: Parameters<typeof mapUser>[0];
+              school: Parameters<typeof mapSchool>[0];
+              publisher: { id: string; name: string } | null;
+            };
+          }>("/auth/me");
+          if (meRes.data?.ok && meRes.data.data?.user) {
+            const d = meRes.data.data;
+            set({
+              user: mapUser(d.user),
+              school: mapSchool(d.school),
+              publisher: d.publisher,
+              bootstrapped: true,
+            });
+            return;
+          }
+        } catch {
+          setAccessToken(null);
+        }
+      }
+    } catch {
+      setAccessToken(null);
+    }
+    set({ user: null, school: null, publisher: null, bootstrapped: true });
+  },
+
+  logout: async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      /* ignore */
+    }
+    setAccessToken(null);
+    set({ user: null, school: null, publisher: null });
+  },
+
+  setLanguage: (lng) => {
+    const { user } = get();
+    if (!user) return;
+    set({ user: { ...user, preferredLang: lng } });
+  },
+}));
