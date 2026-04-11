@@ -17,8 +17,7 @@ export function AuthLayout() {
           <div className="flex flex-col justify-between px-4 py-6 md:px-14 md:py-12 xl:px-20">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-xs font-semibold tracking-wider text-slate-500">PANWORLD</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{t("app.name")}</div>
+               <div className="mt-1 text-lg font-semibold text-slate-900">{t("app.name")}</div>
               </div>
               <LanguageToggle />
             </div>

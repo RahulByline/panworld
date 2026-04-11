@@ -1,89 +1,159 @@
-import { useMemo, useState } from "react";
-import { Card } from "../../components/Card";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
-import { usePortalMock } from "./mockHooks";
+import type { CSSProperties, ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { PwPageHeader } from "../../panworld/PwPageHeader";
+import { cn } from "../../utils/cn";
 
-function pillClass(kind: string) {
-  if (kind === "Admin") return "bg-slate-900 text-white";
-  if (kind === "Support") return "bg-amber-100 text-amber-900";
-  if (kind === "Webinar") return "bg-indigo-100 text-indigo-900";
-  if (kind === "Training") return "bg-emerald-100 text-emerald-900";
-  return "bg-sky-100 text-sky-900";
-}
+const FILTERS = [
+  { id: "all", key: "mvpPages.announcements.filterAll" },
+  { id: "publisher", key: "mvpPages.announcements.filterPublisher" },
+  { id: "titles", key: "mvpPages.announcements.filterTitles" },
+  { id: "promo", key: "mvpPages.announcements.filterPromo" },
+  { id: "events", key: "mvpPages.announcements.filterEvents" },
+] as const;
 
 export function AnnouncementsPage() {
-  const { announcements } = usePortalMock();
-  const [q, setQ] = useState("");
-  const [category, setCategory] = useState<"All" | (typeof announcements)[number]["category"]>("All");
-
-  const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    return announcements
-      .filter((a) => (category === "All" ? true : a.category === category))
-      .filter((a) => (qq ? (a.title + " " + a.summary + " " + a.body).toLowerCase().includes(qq) : true))
-      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt));
-  }, [announcements, q, category]);
+  const { t } = useTranslation();
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
+  const [digest, setDigest] = useState(true);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-2xl font-semibold text-slate-900">Announcements</div>
-          <div className="mt-1 text-sm text-slate-600">Pinned updates, product notes, and operational notices.</div>
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Publish
-          </Button>
-          <Button type="button">Export</Button>
-        </div>
+    <div>
+      <PwPageHeader
+        title={t("mvpPages.announcements.title")}
+        subtitle={t("mvpPages.announcements.subtitle")}
+        right={
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] text-[#5C5A55]">{t("mvpPages.announcements.weeklyDigest")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={digest}
+              className={cn("relative h-[22px] w-10 rounded-full transition-colors", digest ? "bg-[#0A3D62]" : "bg-[#E2E0D9]")}
+              onClick={() => setDigest((d) => !d)}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 h-[18px] w-[18px] rounded-full bg-white transition-all",
+                  digest ? "end-0.5" : "start-0.5",
+                )}
+              />
+            </button>
+          </div>
+        }
+      />
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            className={cn("pw-btn pw-btn-sm", filter === f.id ? "pw-btn-primary" : "pw-btn-outline")}
+            onClick={() => setFilter(f.id)}
+          >
+            {t(f.key)}
+          </button>
+        ))}
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search announcements…" />
-          <select
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as any)}
-          >
-            <option value="All">All categories</option>
-            <option value="Product">Product</option>
-            <option value="Training">Training</option>
-            <option value="Webinar">Webinar</option>
-            <option value="Admin">Admin</option>
-            <option value="Support">Support</option>
-          </select>
-          <div className="flex items-center justify-end text-sm text-slate-600">
-            {rows.length} item{rows.length === 1 ? "" : "s"}
-          </div>
-        </div>
-      </Card>
+      <div
+        className="mb-5 rounded-2xl p-5 text-white"
+        style={{ background: "linear-gradient(135deg,#4A148C,#7B1FA2)" }}
+      >
+        <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wider opacity-60">{t("mvpPages.announcements.pinnedMeta")}</div>
+        <div className="mb-1.5 font-serif text-lg">{t("mvpPages.announcements.pinnedTitle")}</div>
+        <p className="mb-3.5 text-[13.5px] opacity-90">{t("mvpPages.announcements.pinnedBody")}</p>
+        <Link to="/app/kits" className="pw-btn pw-btn-sm border border-white/30 bg-white/20 text-white no-underline hover:bg-white/30">
+          {t("mvpPages.announcements.exploreKits")}
+        </Link>
+      </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {rows.map((a) => (
-          <Card key={a.id} className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={"rounded-full px-2.5 py-1 text-xs font-semibold " + pillClass(a.category)}>{a.category}</span>
-                  {a.pinned ? <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">Pinned</span> : null}
-                </div>
-                <div className="mt-2 text-sm font-semibold text-slate-900">{a.title}</div>
-                <div className="mt-1 text-xs text-slate-500">{new Date(a.createdAt).toLocaleString()}</div>
-              </div>
-              <Button type="button" variant="ghost" size="sm">
-                View
-              </Button>
-            </div>
-
-            <div className="mt-3 text-sm text-slate-700">{a.summary}</div>
-            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{a.body}</div>
-          </Card>
-        ))}
+      <div className="pw-card divide-y divide-[#E2E0D9] p-0">
+        <AnnRow
+          badge="New Titles"
+          badgeClass="pw-badge-accent"
+          date="5 Apr 2026"
+          title="Reveal Math 2025 Edition — Now Available"
+          body="McGraw Hill's updated Reveal Math series includes new UAE scope & sequence alignment and updated digital tools on ConnectED."
+          action={
+            <Link to="/app/catalogue" className="pw-btn pw-btn-outline pw-btn-sm shrink-0 no-underline">
+              View in Catalogue
+            </Link>
+          }
+        />
+        <AnnRow
+          badge="Promotion"
+          badgeClass="pw-badge-success"
+          date="1 Apr 2026"
+          title="Achieve3000 Early Bird — 15% off until 31 May 2026"
+          body="Schools ordering Achieve3000 licences before 31 May receive a 15% discount on Year 1 licences. Submit your RFQ to lock in the price."
+          action={
+            <Link to="/app/rfq" className="pw-btn pw-btn-accent pw-btn-sm shrink-0 no-underline">
+              Submit RFQ
+            </Link>
+          }
+        />
+        <AnnRow
+          badge="Publisher News"
+          badgeClass="pw-badge-brand"
+          date="28 Mar 2026"
+          title="StudySync adds Arabic language support for UI"
+          body="StudySync's platform now offers an Arabic interface option for students and teachers in the GCC region — rolling out to all schools in April 2026."
+          action={
+            <button type="button" className="pw-btn pw-btn-outline pw-btn-sm shrink-0">
+              Request Demo
+            </button>
+          }
+        />
+        <AnnRow
+          badge="Events"
+          badgeClass="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+          badgeStyle={{ background: "#FFF3E0", color: "#8B4513" }}
+          date="20 Mar 2026"
+          title="Panworld Education Forum — Dubai · 14 May 2026"
+          body="Annual partner forum at Atlantis The Palm. Publisher presentations, curriculum workshops, and networking dinner. All Panworld school partners invited."
+          action={
+            <button type="button" className="pw-btn pw-btn-outline pw-btn-sm shrink-0">
+              Register →
+            </button>
+          }
+        />
       </div>
     </div>
   );
 }
 
+function AnnRow({
+  badge,
+  badgeClass,
+  badgeStyle,
+  date,
+  title,
+  body,
+  action,
+}: {
+  badge: string;
+  badgeClass?: string;
+  badgeStyle?: CSSProperties;
+  date: string;
+  title: string;
+  body: string;
+  action: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col justify-between gap-3 px-4 py-4 sm:flex-row sm:items-start">
+      <div className="min-w-0">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <span className={cn("pw-badge", badgeClass)} style={badgeStyle}>
+            {badge}
+          </span>
+          <span className="text-xs text-[#9A9890]">{date}</span>
+        </div>
+        <div className="mb-1 text-[15px] font-semibold text-[#1A1917]">{title}</div>
+        <div className="text-[13.5px] text-[#5C5A55]">{body}</div>
+      </div>
+      {action}
+    </div>
+  );
+}

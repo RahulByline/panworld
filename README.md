@@ -5,7 +5,7 @@ Production-structured, demo-ready prototype for a multi-role, multi-phase school
 ## Tech stack
 
 - **Frontend**: React + Vite, React Router, Tailwind CSS, Zustand, React Hook Form + Zod, i18next (EN/AR + RTL), Recharts
-- **Backend**: Node.js + Express, JWT access + refresh tokens, Multer (ready), MySQL (`mysql2`) query layer (Prisma removed)
+- **Backend**: Node.js + Express (plain JavaScript), JWT access + refresh tokens, Multer, MySQL (`mysql2`)
 - **Database**: MySQL
 
 ## Monorepo structure
@@ -26,7 +26,7 @@ Production-structured, demo-ready prototype for a multi-role, multi-phase school
 Backend:
 
 - Copy `backend/.env.example` → `backend/.env`
-- Update `DATABASE_URL` to your local MySQL
+- Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` to match your local MySQL
 
 Frontend:
 
@@ -60,8 +60,11 @@ Backend (port 4000):
 
 ```bash
 cd backend
-npm run dev
+npm install   # first time
+node server.js
 ```
+
+(`npm run dev` from the monorepo root also runs the backend workspace script, which is `node server.js`.)
 
 Frontend (port 5173):
 

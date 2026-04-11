@@ -5,9 +5,12 @@ export type UserRole =
   | "CEO"
   | "PROCUREMENT"
   | "PANWORLD_ADMIN"
-  | "PUBLISHER";
+  | "PUBLISHER"
+  | "SCHOOL_ADMIN"
+  | "SALES_ADMIN";
 
-export type CountryCode = "UAE" | "KSA";
+/** ISO-style codes stored in DB `countries.code` (e.g. UAE, KSA, OM). */
+export type CountryCode = string;
 export type SchoolPurchaseStatus = "REGISTERED_NO_ORDERS" | "FIRST_ORDER_CONFIRMED" | "ACTIVE_REPEAT";
 
 export type School = {
@@ -19,6 +22,9 @@ export type School = {
   preferredLang: "en" | "ar";
   enabledModules: Record<string, unknown>;
   vatRate: string | number;
+  /** Official school contact (not the login user). */
+  schoolEmail?: string | null;
+  whatsapp?: string | null;
 };
 
 export type User = {

@@ -753,6 +753,7 @@ INSERT INTO users (id, email, password_hash, first_name, last_name, role, depart
 ('usr_ceo','ceo@panworld-demo.com',@pw_hash,'Khalid','CEO','CEO',NULL,1,'en','sch_adbs',NULL),
 ('usr_proc','procurement@panworld-demo.com',@pw_hash,'Lina','Procurement','PROCUREMENT',NULL,1,'en','sch_adbs',NULL),
 ('usr_admin','admin@panworld-demo.com',@pw_hash,'Panworld','Admin','PANWORLD_ADMIN',NULL,1,'en',NULL,NULL),
+('usr_sales','sales@panworld-demo.com',@pw_hash,'Layla','Account','SALES_ADMIN',NULL,1,'en',NULL,NULL),
 ('usr_publisher','publisher@panworld-demo.com',@pw_hash,'Publisher','Partner','PUBLISHER',NULL,1,'en',NULL,'pub_oxford');
 
 INSERT INTO language_preferences (id, user_id, lang, rtl) VALUES
@@ -762,6 +763,7 @@ INSERT INTO language_preferences (id, user_id, lang, rtl) VALUES
 ('lp_ceo','usr_ceo','en',0),
 ('lp_proc','usr_proc','en',0),
 ('lp_admin','usr_admin','en',0),
+('lp_sales','usr_sales','en',0),
 ('lp_publisher','usr_publisher','en',0);
 
 SET FOREIGN_KEY_CHECKS = 1;
