@@ -82,11 +82,7 @@ const SYSTEM: NavItem[] = [
 
 function Section({ titleKey }: { titleKey: string }) {
   const { t } = useTranslation();
-  return (
-    <div className="mb-1 mt-3 px-4 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/30 first:mt-0">
-      {t(titleKey)}
-    </div>
-  );
+  return <div className="pw-nav-section-label">{t(titleKey)}</div>;
 }
 
 function NavBlock({ items }: { items: NavItem[] }) {
@@ -160,22 +156,22 @@ export function AdminSidebar() {
         <NavBlock items={SYSTEM} />
       </div>
 
-      <div className="border-t border-white/[0.08] px-4 py-3">
+      <div className="border-t border-[var(--pw-border)] bg-white/40 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#512DA8] text-[11px] font-semibold text-white">
+          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[var(--pw-brand)] text-[11px] font-semibold text-white ring-2 ring-[var(--pw-brand-light)]">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-medium text-white/80">
+            <div className="truncate text-[12.5px] font-medium text-[var(--pw-text)]">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-[11px] text-white/40">{t("admin.nav.roleLabel")}</div>
+            <div className="truncate text-[11px] text-[var(--pw-text-muted)]">{t("admin.nav.roleLabel")}</div>
           </div>
         </div>
         <button
           type="button"
           onClick={() => void logout()}
-          className="mt-3 w-full rounded-md border border-white/10 py-1.5 text-center text-xs text-white/70 hover:bg-white/5"
+          className="mt-3 w-full rounded-md border border-[var(--pw-border)] bg-white py-1.5 text-center text-xs font-medium text-[var(--pw-text-secondary)] transition hover:bg-[var(--pw-muted)]"
         >
           {t("admin.nav.signOut")}
         </button>

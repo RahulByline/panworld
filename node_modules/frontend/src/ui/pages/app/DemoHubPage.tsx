@@ -1,118 +1,176 @@
-import { useMemo, useState } from "react";
-import { Card } from "../../components/Card";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
-import { useAuthStore } from "../../../store/auth.store";
+import { useTranslation } from "react-i18next";
+import { PwPageHeader } from "../../panworld/PwPageHeader";
+import { cn } from "../../utils/cn";
 
-type DemoAccess = {
-  id: string;
-  publisher: string;
-  product: string;
-  status: "Requested" | "Approved" | "Active" | "Expired";
-  createdAt: string;
-  notes: string;
-};
-
-function statusPill(s: DemoAccess["status"]) {
-  if (s === "Active") return "bg-emerald-100 text-emerald-900";
-  if (s === "Approved") return "bg-sky-100 text-sky-900";
-  if (s === "Expired") return "bg-slate-100 text-slate-700";
-  return "bg-amber-100 text-amber-900";
-}
+const HISTORY = [
+  { publisher: "McGraw Hill", product: "Inspire Science G4", date: "3 Apr 2026" },
+  { publisher: "Kodeit", product: "Social Sciences G5", date: "28 Mar 2026" },
+  { publisher: "Achieve3000", product: "Literacy Platform", date: "20 Mar 2026" },
+];
 
 export function DemoHubPage() {
-  const school = useAuthStore((s) => s.school);
-  const country = (school?.country ?? "UAE") as "UAE" | "KSA";
-  const [q, setQ] = useState("");
-
-  const rows = useMemo<DemoAccess[]>(() => {
-    const base: DemoAccess[] = [
-      {
-        id: "d1",
-        publisher: "Kodeit Global",
-        product: "Kodeit Academy",
-        status: "Active",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-        notes: "Teacher accounts provisioned.",
-      },
-      {
-        id: "d2",
-        publisher: "McGraw Hill",
-        product: country === "KSA" ? "KSA NCC English Suite" : "UAE English Suite",
-        status: "Approved",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-        notes: "Credentials shared via email.",
-      },
-      {
-        id: "d3",
-        publisher: "Oxford",
-        product: "Reading Program Demo",
-        status: "Requested",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-        notes: "Pending approval from publisher rep.",
-      },
-      {
-        id: "d4",
-        publisher: "Pearson/Savvas",
-        product: "Math Digital Demo",
-        status: "Expired",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-        notes: "Demo expired; request extension.",
-      },
-    ];
-    const qq = q.trim().toLowerCase();
-    return base.filter((x) => (qq ? (x.publisher + " " + x.product + " " + x.status).toLowerCase().includes(qq) : true));
-  }, [q, country]);
+  const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-2xl font-semibold text-slate-900">Demo hub</div>
-          <div className="mt-1 text-sm text-slate-600">Request, manage, and launch publisher demos.</div>
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Request demo
-          </Button>
-          <Button type="button">Export</Button>
+    <div>
+      <PwPageHeader title={t("mvpPages.demo.title")} subtitle={t("mvpPages.demo.subtitle")} />
+
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-[10px] border border-[#E2E0D9] bg-[#F5F4F0] px-4 py-3.5">
+        <span className="text-lg">⚡</span>
+        <div className="min-w-0 text-[13.5px]">
+          <span className="font-medium text-[#1A1917]">{t("mvpPages.demo.instantTitle")}</span>{" "}
+          <span className="text-[#5C5A55]">{t("mvpPages.demo.instantBody")}</span>
         </div>
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search demo access…" />
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700">
-            School country: <span className="font-semibold">{country}</span>
-          </div>
-          <div className="flex items-center justify-end text-sm text-slate-600">{rows.length} entries</div>
-        </div>
-      </Card>
+      <div className="pw-grid-3 mb-8">
+        <DemoBlock
+          icon="📗"
+          pub="pub-mcgraw"
+          title="McGraw Hill ConnectED"
+          sub="4 products · Inspire Science, Reveal Math, Wonders, Treasures"
+          tag1="Shared login"
+          tag2={t("mvpPages.demo.instantDelivered")}
+          status="ok"
+          cta={t("mvpPages.demo.accessDemo")}
+          ctaClass="pw-btn-primary"
+        />
+        <DemoBlock
+          icon="🏫"
+          pub="pub-kodeit"
+          title="Kodeit Global"
+          sub="3 products · Social Sciences, KG Programme, ICT"
+          tag1="Shared login"
+          tag2={t("mvpPages.demo.instantDelivered")}
+          status="ok"
+          cta={t("mvpPages.demo.accessDemo")}
+          ctaClass="bg-[#7B1FA2] text-white border-0 hover:opacity-95"
+          border
+          badge="Our Brand"
+        />
+        <DemoBlock
+          icon="💬"
+          pub="pub-studysync"
+          title="StudySync"
+          sub="1 product · ELA Platform G6–G12"
+          tag1="School-specific"
+          tag2={t("mvpPages.demo.provision24")}
+          status="pending"
+          cta={t("mvpPages.demo.requestDemo")}
+          ctaClass="pw-btn-outline"
+        />
+        <DemoBlock
+          icon="📈"
+          pub="pub-achieve"
+          title="Achieve3000"
+          sub="1 product · Literacy Platform G1–G12"
+          tag1="Shared login"
+          tag2={t("mvpPages.demo.instantDelivered")}
+          status="ok"
+          cta={t("mvpPages.demo.accessDemo")}
+          ctaClass="pw-btn-outline"
+        />
+        <DemoBlock
+          icon="🏫"
+          pub="pub-powerschool"
+          title="PowerSchool"
+          sub="SIS + LMS platform"
+          tag1="School-specific"
+          tag2={t("mvpPages.demo.provision24")}
+          status="pending"
+          cta={t("mvpPages.demo.requestDemo")}
+          ctaClass="pw-btn-outline"
+        />
+        <DemoBlock
+          icon="📕"
+          pub="pub-oxford"
+          title="Oxford University Press"
+          sub="Primary & Secondary curriculum"
+          tag1="Shared login"
+          tag2={t("mvpPages.demo.instantDelivered")}
+          status="ok"
+          cta={t("mvpPages.demo.accessDemo")}
+          ctaClass="pw-btn-outline"
+        />
+      </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {rows.map((x) => (
-          <Card key={x.id} className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">{x.product}</div>
-                <div className="mt-1 text-sm text-slate-600">{x.publisher}</div>
-                <div className="mt-2 text-xs text-slate-500">Requested: {new Date(x.createdAt).toLocaleDateString()}</div>
-              </div>
-              <span className={"rounded-full px-2.5 py-1 text-xs font-semibold " + statusPill(x.status)}>{x.status}</span>
-            </div>
-            <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{x.notes}</div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button type="button" size="sm" variant="secondary">
-                Credentials
-              </Button>
-              <Button type="button" size="sm">
-                Launch
-              </Button>
-            </div>
-          </Card>
-        ))}
+      <div className="pw-card">
+        <div className="mb-3.5 text-sm font-semibold text-[#1A1917]">{t("mvpPages.demo.accessHistory")}</div>
+        <table className="pw-data-table">
+          <thead>
+            <tr>
+              <th>Publisher</th>
+              <th>Product</th>
+              <th>Date Accessed</th>
+              <th>Status</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {HISTORY.map((row) => (
+              <tr key={row.publisher + row.date}>
+                <td>
+                  <strong>{row.publisher}</strong>
+                </td>
+                <td>{row.product}</td>
+                <td className="text-[#5C5A55]">{row.date}</td>
+                <td>
+                  <span className="pw-status pw-status-active">Credentials sent</span>
+                </td>
+                <td>
+                  <button type="button" className="pw-btn pw-btn-outline pw-btn-xs">
+                    {t("mvpPages.demo.resend")}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
+function DemoBlock({
+  icon,
+  pub,
+  title,
+  sub,
+  tag1,
+  tag2,
+  status,
+  cta,
+  ctaClass,
+  border,
+  badge,
+}: {
+  icon: string;
+  pub: string;
+  title: string;
+  sub: string;
+  tag1: string;
+  tag2: string;
+  status: "ok" | "pending";
+  cta: string;
+  ctaClass: string;
+  border?: boolean;
+  badge?: string;
+}) {
+  return (
+    <div className={cn("pw-demo-card", border && "border-2 border-[#7B1FA2]")}>
+      <div className="flex items-start justify-between gap-2">
+        <div className={cn("pw-demo-icon", pub)}>{icon}</div>
+        {badge ? <span className="pw-badge pw-badge-new">{badge}</span> : null}
+      </div>
+      <div className="mt-2 text-sm font-semibold text-[#1A1917]">{title}</div>
+      <div className="mb-3 text-xs text-[#5C5A55]">{sub}</div>
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        <span className="pw-tag text-[11px]">{tag1}</span>
+        <span className={cn("pw-status text-[11px] px-2 py-0.5", status === "ok" ? "pw-status-active" : "pw-status-pending")}>{tag2}</span>
+      </div>
+      <button type="button" className={cn("pw-btn pw-btn-sm w-full", ctaClass)}>
+        {cta}
+      </button>
+    </div>
+  );
+}

@@ -1,85 +1,91 @@
-import { useMemo, useState } from "react";
-import { Card } from "../../components/Card";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
-import { usePortalMock } from "./mockHooks";
+import { useTranslation } from "react-i18next";
+import { PwPageHeader } from "../../panworld/PwPageHeader";
 
 export function CertificatesPage() {
-  const { certificates } = usePortalMock();
-  const [q, setQ] = useState("");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-
-  const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    return certificates
-      .filter((x) => (verifiedOnly ? x.verified : true))
-      .filter((x) => (qq ? (x.certificateNo + " " + x.title).toLowerCase().includes(qq) : true))
-      .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
-  }, [certificates, q, verifiedOnly]);
+  const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-2xl font-semibold text-slate-900">Certificates</div>
-          <div className="mt-1 text-sm text-slate-600">Issued certificates with verification and downloads.</div>
+    <div>
+      <PwPageHeader
+        title={t("nav.myCertificates")}
+        subtitle={t("mvpPages.certificatesPage.subtitle")}
+        right={
+          <div className="pw-stat-card pw-stat-inline">
+            <span className="text-base">🏅</span>
+            <div>
+              <div className="text-[11px] text-[#5C5A55]">{t("mvpPages.certificatesPage.totalEarned")}</div>
+              <div className="text-lg font-bold text-[#0A3D62]">4</div>
+            </div>
+          </div>
+        }
+      />
+
+      <div className="pw-grid-2">
+        <div className="pw-cert-card">
+          <div className="mb-2">
+            <span className="pw-badge pw-badge-success">Product Training</span>
+          </div>
+          <div className="mb-1 text-base font-semibold text-[#1A1917]">ConnectED Platform Mastery</div>
+          <div className="mb-2.5 text-[13px] text-[#5C5A55]">McGraw Hill · Completed 12 Feb 2026 · 4 CPD hours</div>
+          <div className="mb-3 text-xs text-[#9A9890]">Certificate ID: PW-CERT-2026-0412</div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="pw-btn pw-btn-primary pw-btn-sm">
+              {t("mvpPages.certificatesPage.downloadPdf")}
+            </button>
+            <button type="button" className="pw-btn pw-btn-outline pw-btn-sm">
+              {t("mvpPages.certificatesPage.share")}
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary">
-            Verify
-          </Button>
-          <Button type="button">Export</Button>
+
+        <div className="pw-cert-card">
+          <div className="mb-2">
+            <span className="pw-badge pw-badge-new">Kodeit Academy</span>
+          </div>
+          <div className="mb-1 text-base font-semibold text-[#1A1917]">Differentiated Instruction — American Curriculum</div>
+          <div className="mb-2.5 text-[13px] text-[#5C5A55]">Kodeit Academy · Completed 5 Mar 2026 · 7 CPD hours</div>
+          <div className="mb-3 text-xs text-[#9A9890]">Certificate ID: PW-CERT-2026-0587</div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="pw-btn pw-btn-primary pw-btn-sm">
+              {t("mvpPages.certificatesPage.downloadPdf")}
+            </button>
+            <button type="button" className="pw-btn pw-btn-outline pw-btn-sm">
+              {t("mvpPages.certificatesPage.share")}
+            </button>
+          </div>
+        </div>
+
+        <div className="pw-cert-card">
+          <div className="mb-2">
+            <span className="pw-badge pw-badge-brand">Webinar</span>
+          </div>
+          <div className="mb-1 text-base font-semibold text-[#1A1917]">Inspire Science — Lab Safety Best Practices</div>
+          <div className="mb-2.5 text-[13px] text-[#5C5A55]">McGraw Hill Webinar · Attended 20 Jan 2026 · 1 CPD hour</div>
+          <div className="mb-3 text-xs text-[#9A9890]">Certificate ID: PW-CERT-2026-0198</div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="pw-btn pw-btn-primary pw-btn-sm">
+              {t("mvpPages.certificatesPage.downloadPdf")}
+            </button>
+            <button type="button" className="pw-btn pw-btn-outline pw-btn-sm">
+              {t("mvpPages.certificatesPage.share")}
+            </button>
+          </div>
+        </div>
+
+        <div className="pw-cert-card">
+          <div className="mb-2">
+            <span className="pw-badge pw-badge-success">Product Training</span>
+          </div>
+          <div className="mb-1 text-base font-semibold text-[#1A1917]">Inspire Science G1–G4 Mastery</div>
+          <div className="mb-2.5 text-[13px] text-[#5C5A55]">
+            McGraw Hill · {t("mvpPages.certificatesPage.inProgress")}
+          </div>
+          <div className="pw-progress-bar mb-2">
+            <div className="pw-progress-fill" style={{ width: "87%" }} />
+          </div>
+          <div className="text-xs font-medium text-[#E8912D]">{t("mvpPages.certificatesPage.almostThere")}</div>
         </div>
       </div>
-
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by certificate no/title…" />
-          <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
-            <input type="checkbox" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />
-            Verified only
-          </label>
-          <div className="flex items-center justify-end text-sm text-slate-600">{rows.length} records</div>
-        </div>
-      </Card>
-
-      <Card className="p-2">
-        <div className="overflow-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase tracking-wider text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Certificate</th>
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Issued</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rows.map((x) => (
-                <tr key={x.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{x.certificateNo}</td>
-                  <td className="px-4 py-3 text-slate-700">{x.title}</td>
-                  <td className="px-4 py-3 text-slate-700">{new Date(x.issuedAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">
-                    {x.verified ? (
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-900">Verified</span>
-                    ) : (
-                      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">Unverified</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button type="button" size="sm" variant="secondary">
-                      Download
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
     </div>
   );
 }
-

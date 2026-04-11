@@ -4,7 +4,7 @@ import { AdminTopbar } from "../admin/AdminTopbar";
 
 export function AdminLayout() {
   return (
-    <div className="min-h-screen bg-[#EBE8E4] font-sans text-[#1A1917]">
+    <div className="min-h-screen bg-[var(--pw-page)] font-sans text-[var(--pw-text)] pw-app">
       <AdminSidebar />
       <div className="min-h-screen pl-[252px]">
         <AdminTopbar />

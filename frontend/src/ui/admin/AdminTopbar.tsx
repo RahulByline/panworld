@@ -45,20 +45,20 @@ export function AdminTopbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-[#E2E0D9] bg-white px-6 md:px-7">
-      <h1 className="flex-1 text-[15px] font-medium text-[#1A1917]">{t(titleKey)}</h1>
+    <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-[var(--pw-border)] bg-white/95 px-6 shadow-[0_1px_0_rgba(15,23,42,0.06)] backdrop-blur-sm md:px-7">
+      <h1 className="flex-1 text-[15px] font-medium text-[var(--pw-text)]">{t(titleKey)}</h1>
       <div className="flex items-center gap-2">
-        <span className="hidden rounded-full bg-[#E8912D]/15 px-3 py-1 text-xs font-semibold text-[#C0761F] sm:inline">
+        <span className="hidden rounded-full bg-[var(--pw-accent-light)] px-3 py-1 text-xs font-semibold text-[var(--pw-accent)] ring-1 ring-[var(--pw-border)]/40 sm:inline">
           {t("admin.top.superAdmin")}
         </span>
         <LanguageToggle />
         <button
           type="button"
-          className="relative flex h-9 w-9 items-center justify-center rounded-md border border-[#E2E0D9] bg-white text-base text-[#5C5A55] hover:bg-[#F5F4F0]"
+          className="relative flex h-9 w-9 items-center justify-center rounded-md border border-[var(--pw-border)] bg-white text-[var(--pw-text-secondary)] transition hover:bg-[var(--pw-muted)]"
           aria-label="Notifications"
         >
-          <Bell size={18} />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-white bg-[#C0392B]" />
+          <Bell size={18} className="text-[var(--pw-brand)]" />
+          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-white bg-[var(--pw-accent)]" />
         </button>
       </div>
     </header>

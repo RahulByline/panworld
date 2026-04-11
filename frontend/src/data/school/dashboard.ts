@@ -1,27 +1,114 @@
 /** Static content aligned with panworld_phase1_mvp.html — wired to i18n keys under `app.schoolDashboard`. */
 
-export type ChecklistState = "done" | "active" | "todo";
-
-export type SchoolChecklistRow = {
+export type SchoolChecklistSubItem = {
   id: string;
-  state: ChecklistState;
   labelKey: string;
+  trailKey: string;
+  done: boolean;
   catalogueCta?: boolean;
 };
 
-export const schoolGettingStartedChecklist: SchoolChecklistRow[] = [
-  { id: "profile", state: "done", labelKey: "app.schoolDashboard.checklist.profile" },
-  { id: "browse", state: "done", labelKey: "app.schoolDashboard.checklist.browse" },
-  { id: "demo", state: "done", labelKey: "app.schoolDashboard.checklist.demo" },
-  { id: "sample", state: "done", labelKey: "app.schoolDashboard.checklist.sample" },
-  { id: "wishlist", state: "active", labelKey: "app.schoolDashboard.checklist.wishlist", catalogueCta: true },
-  { id: "firstRfq", state: "todo", labelKey: "app.schoolDashboard.checklist.firstRfq" },
-  { id: "inviteStaff", state: "todo", labelKey: "app.schoolDashboard.checklist.inviteStaff" },
-  { id: "training", state: "todo", labelKey: "app.schoolDashboard.checklist.training" },
-  { id: "webinar", state: "todo", labelKey: "app.schoolDashboard.checklist.webinar" },
+export type SchoolChecklistAccordionSection = {
+  id: string;
+  titleKey: string;
+  subItems: SchoolChecklistSubItem[];
+};
+
+export const schoolChecklistAccordionSections: SchoolChecklistAccordionSection[] = [
+  {
+    id: "schoolProfile",
+    titleKey: "app.schoolDashboard.checklistAccordion.sectionSchoolProfile",
+    subItems: [
+      {
+        id: "profile",
+        labelKey: "app.schoolDashboard.checklistAccordion.subProfile",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailProfile",
+        done: true,
+      },
+    ],
+  },
+  {
+    id: "discovery",
+    titleKey: "app.schoolDashboard.checklistAccordion.sectionDiscovery",
+    subItems: [
+      {
+        id: "browse",
+        labelKey: "app.schoolDashboard.checklistAccordion.subBrowse",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailBrowse",
+        done: true,
+      },
+      {
+        id: "demo",
+        labelKey: "app.schoolDashboard.checklistAccordion.subDemo",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailDemo",
+        done: true,
+      },
+      {
+        id: "sample",
+        labelKey: "app.schoolDashboard.checklistAccordion.subSample",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailSample",
+        done: true,
+      },
+    ],
+  },
+  {
+    id: "procurement",
+    titleKey: "app.schoolDashboard.checklistAccordion.sectionProcurement",
+    subItems: [
+      {
+        id: "wishlist",
+        labelKey: "app.schoolDashboard.checklistAccordion.subWishlist",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailWishlist",
+        done: false,
+        catalogueCta: true,
+      },
+      {
+        id: "firstRfq",
+        labelKey: "app.schoolDashboard.checklistAccordion.subRfq",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailRfq",
+        done: false,
+      },
+    ],
+  },
+  {
+    id: "enablement",
+    titleKey: "app.schoolDashboard.checklistAccordion.sectionEnablement",
+    subItems: [
+      {
+        id: "inviteStaff",
+        labelKey: "app.schoolDashboard.checklistAccordion.subStaff",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailStaff",
+        done: false,
+      },
+      {
+        id: "training",
+        labelKey: "app.schoolDashboard.checklistAccordion.subTraining",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailTraining",
+        done: false,
+      },
+      {
+        id: "webinar",
+        labelKey: "app.schoolDashboard.checklistAccordion.subWebinar",
+        trailKey: "app.schoolDashboard.checklistAccordion.trailWebinar",
+        done: false,
+      },
+    ],
+  },
 ];
 
-export const schoolDashboardChecklistSummary = { done: 4, total: 9 };
+function accordionChecklistTotals(sections: SchoolChecklistAccordionSection[]) {
+  let done = 0;
+  let total = 0;
+  for (const s of sections) {
+    for (const item of s.subItems) {
+      total += 1;
+      if (item.done) done += 1;
+    }
+  }
+  return { done, total };
+}
+
+export const schoolDashboardChecklistSummary = accordionChecklistTotals(schoolChecklistAccordionSections);
 
 export const schoolAccountManager = {
   name: "Rania Khalil",
@@ -66,7 +153,6 @@ export type ProductBadge = "newEd" | "ourBrand" | "newPartner" | "newArabic" | "
 
 export type SchoolProductHighlight = {
   id: string;
-  emoji: string;
   productTitleKey: string;
   productSubKey: string;
   priceAed: number;
@@ -79,7 +165,6 @@ export type SchoolProductHighlight = {
 export const recommendedForYou: SchoolProductHighlight[] = [
   {
     id: "inspireScience",
-    emoji: "📗",
     productTitleKey: "app.schoolDashboard.products.inspireScience.title",
     productSubKey: "app.schoolDashboard.products.inspireScience.sub",
     priceAed: 89,
@@ -90,7 +175,6 @@ export const recommendedForYou: SchoolProductHighlight[] = [
   },
   {
     id: "achieveEla",
-    emoji: "📘",
     productTitleKey: "app.schoolDashboard.products.achieveEla.title",
     productSubKey: "app.schoolDashboard.products.achieveEla.sub",
     priceAed: 145,
@@ -100,7 +184,6 @@ export const recommendedForYou: SchoolProductHighlight[] = [
   },
   {
     id: "studysyncG68",
-    emoji: "📙",
     productTitleKey: "app.schoolDashboard.products.studysyncG68.title",
     productSubKey: "app.schoolDashboard.products.studysyncG68.sub",
     priceAed: 120,
@@ -110,7 +193,6 @@ export const recommendedForYou: SchoolProductHighlight[] = [
   },
   {
     id: "kodeitSocSci",
-    emoji: "🏫",
     productTitleKey: "app.schoolDashboard.products.kodeitSocSci.title",
     productSubKey: "app.schoolDashboard.products.kodeitSocSci.sub",
     priceAed: 75,
@@ -121,7 +203,6 @@ export const recommendedForYou: SchoolProductHighlight[] = [
   },
   {
     id: "jollyKg",
-    emoji: "🔤",
     productTitleKey: "app.schoolDashboard.products.jollyKg.title",
     productSubKey: "app.schoolDashboard.products.jollyKg.sub",
     priceAed: 320,
@@ -132,10 +213,12 @@ export const recommendedForYou: SchoolProductHighlight[] = [
   },
 ];
 
+/** Recent catalogue strip beside “Featured new titles” (three cards). */
+export const schoolRecentCatalogue: SchoolProductHighlight[] = recommendedForYou.slice(0, 3);
+
 export const featuredNewTitles: SchoolProductHighlight[] = [
   {
     id: "revealMath",
-    emoji: "📐",
     productTitleKey: "app.schoolDashboard.products.revealMath.title",
     productSubKey: "app.schoolDashboard.products.revealMath.sub",
     priceAed: 95,
@@ -146,7 +229,6 @@ export const featuredNewTitles: SchoolProductHighlight[] = [
   },
   {
     id: "studysyncGcc",
-    emoji: "🗣️",
     productTitleKey: "app.schoolDashboard.products.studysyncGcc.title",
     productSubKey: "app.schoolDashboard.products.studysyncGcc.sub",
     priceAed: 120,
@@ -155,22 +237,113 @@ export const featuredNewTitles: SchoolProductHighlight[] = [
     badge: "newArabic",
     pubClass: "studysync",
   },
+  {
+    id: "jollyKg",
+    productTitleKey: "app.schoolDashboard.products.jollyKg.title",
+    productSubKey: "app.schoolDashboard.products.jollyKg.sub",
+    priceAed: 320,
+    priceSar: 329,
+    priceUnitKey: "perClassroom",
+    badge: "newPartner",
+    pubClass: "jolly",
+  },
+];
+
+/** Tabs for the Featured New Titles list panel (dashboard). */
+export type FeaturedTitlesTabId = "all" | "stem" | "literacy" | "earlyYears";
+
+export const featuredTitlesListTabs: readonly {
+  id: FeaturedTitlesTabId;
+  titleKey: string;
+  productIds: readonly string[];
+}[] = [
+  {
+    id: "all",
+    titleKey: "app.schoolDashboard.featuredTabs.all",
+    productIds: ["revealMath", "studysyncGcc", "jollyKg"],
+  },
+  {
+    id: "stem",
+    titleKey: "app.schoolDashboard.featuredTabs.stem",
+    productIds: ["revealMath"],
+  },
+  {
+    id: "literacy",
+    titleKey: "app.schoolDashboard.featuredTabs.literacy",
+    productIds: ["studysyncGcc"],
+  },
+  {
+    id: "earlyYears",
+    titleKey: "app.schoolDashboard.featuredTabs.earlyYears",
+    productIds: ["jollyKg"],
+  },
 ];
 
 export type PublisherQuick = {
   id: string;
-  icon: string;
   labelKey: string;
   highlight?: boolean;
   ourBrand?: boolean;
 };
 
 export const publisherQuickAccess: PublisherQuick[] = [
-  { id: "mcgraw", icon: "📗", labelKey: "app.schoolDashboard.publishers.mcgraw" },
-  { id: "kodeit", icon: "🏫", labelKey: "app.schoolDashboard.publishers.kodeit", highlight: true, ourBrand: true },
-  { id: "studysync", icon: "📘", labelKey: "app.schoolDashboard.publishers.studysync" },
-  { id: "achieve", icon: "📙", labelKey: "app.schoolDashboard.publishers.achieve3000" },
-  { id: "oxford", icon: "📕", labelKey: "app.schoolDashboard.publishers.oxford" },
+  { id: "mcgraw", labelKey: "app.schoolDashboard.publishers.mcgraw" },
+  { id: "kodeit", labelKey: "app.schoolDashboard.publishers.kodeit", highlight: true, ourBrand: true },
+  { id: "studysync", labelKey: "app.schoolDashboard.publishers.studysync" },
+  { id: "achieve", labelKey: "app.schoolDashboard.publishers.achieve3000" },
+  { id: "oxford", labelKey: "app.schoolDashboard.publishers.oxford" },
 ];
 
 export const schoolWishlistPreview = { itemCount: 5, staleCount: 2 };
+
+/** Mock KPIs for the school home “quick overview” (replace with API when available). */
+export const schoolOverviewStats = {
+  openRfqs: 3,
+  quotesAwaiting: 2,
+  activeOrders: 4,
+  samplesInProgress: 2,
+  trainingCompletionPct: 68,
+  openSupportTickets: 1,
+};
+
+export type PipelineStage = {
+  id: string;
+  labelKey: string;
+  count: number;
+  tone: "brand" | "accent" | "success" | "muted";
+};
+
+export const schoolRfqPipeline: PipelineStage[] = [
+  { id: "draft", labelKey: "app.schoolDashboard.pipeline.draft", count: 1, tone: "muted" },
+  { id: "submitted", labelKey: "app.schoolDashboard.pipeline.submitted", count: 2, tone: "brand" },
+  { id: "quoted", labelKey: "app.schoolDashboard.pipeline.quoted", count: 2, tone: "accent" },
+  { id: "ordered", labelKey: "app.schoolDashboard.pipeline.ordered", count: 4, tone: "success" },
+];
+
+export type SchoolActivityRow = {
+  id: string;
+  titleKey: string;
+  metaKey: string;
+  to: string;
+};
+
+export const schoolRecentActivity: SchoolActivityRow[] = [
+  {
+    id: "quote",
+    titleKey: "app.schoolDashboard.activity.quoteApprovedTitle",
+    metaKey: "app.schoolDashboard.activity.quoteApprovedMeta",
+    to: "/app/rfq",
+  },
+  {
+    id: "sample",
+    titleKey: "app.schoolDashboard.activity.sampleShippedTitle",
+    metaKey: "app.schoolDashboard.activity.sampleShippedMeta",
+    to: "/app/samples",
+  },
+  {
+    id: "training",
+    titleKey: "app.schoolDashboard.activity.trainingTitle",
+    metaKey: "app.schoolDashboard.activity.trainingMeta",
+    to: "/app/training",
+  },
+];

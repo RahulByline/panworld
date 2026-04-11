@@ -1,52 +1,78 @@
-import { useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import type { LucideIcon } from "lucide-react";
+import {
+  Award,
+  BarChart3,
+  BookOpen,
+  ClipboardList,
+  FolderOpen,
+  GraduationCap,
+  Heart,
+  Landmark,
+  LayoutDashboard,
+  LifeBuoy,
+  Map as MapIcon,
+  Megaphone,
+  Mic,
+  Microscope,
+  Package,
+  PlayCircle,
+  Receipt,
+  RefreshCw,
+  ShoppingBag,
+  TrendingUp,
+  UserCog,
+  Users,
+} from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { cn } from "../utils/cn";
 import type { UserRole } from "../../types/domain";
 
 type GateCtx = { role: UserRole; isPublisher: boolean; isAdmin: boolean };
-type NavItem = { to: string; labelKey: string; icon: string; gate?: (ctx: GateCtx) => boolean };
-type NavSection = { phaseKey: string; items: NavItem[] };
 
-const NAV: NavSection[] = [
-  {
-    phaseKey: "navMvp.phase1",
-    items: [
-      { to: "/app", labelKey: "nav.dashboard", icon: "⊞" },
-      { to: "/app/catalogue", labelKey: "nav.catalogueLong", icon: "📚", gate: (c) => !c.isPublisher },
-      { to: "/app/library", labelKey: "nav.libraryBooks", icon: "🏛", gate: (c) => !c.isPublisher },
-      { to: "/app/kits", labelKey: "nav.kits", icon: "🔬", gate: (c) => !c.isPublisher },
-      { to: "/app/curriculum-mapping", labelKey: "nav.curriculumMapping", icon: "🗺", gate: (c) => !c.isPublisher },
-      { to: "/app/demo-hub", labelKey: "nav.demoHub", icon: "▶", gate: (c) => !c.isPublisher },
-      { to: "/app/wishlist", labelKey: "nav.wishlist", icon: "♡", gate: (c) => !c.isPublisher },
-      { to: "/app/announcements", labelKey: "nav.announcements", icon: "📣" },
-      { to: "/app/contacts", labelKey: "nav.contactDirectory", icon: "👥", gate: (c) => !c.isPublisher },
-    ],
-  },
-  {
-    phaseKey: "navMvp.phase2",
-    items: [
-      { to: "/app/training", labelKey: "nav.productTraining", icon: "🎓", gate: (c) => !c.isPublisher },
-      { to: "/app/assessment", labelKey: "nav.assessment", icon: "📊", gate: (c) => !c.isPublisher },
-      { to: "/app/analytics", labelKey: "nav.analytics", icon: "📈" },
-      { to: "/app/webinars", labelKey: "nav.pdWebinars", icon: "🎤", gate: (c) => !c.isPublisher },
-      { to: "/app/resources", labelKey: "nav.resources", icon: "📁", gate: (c) => !c.isPublisher },
-      { to: "/app/samples", labelKey: "nav.samples", icon: "📦", gate: (c) => !c.isPublisher },
-      { to: "/app/certificates", labelKey: "nav.myCertificates", icon: "🏅", gate: (c) => !c.isPublisher },
-      { to: "/app/support", labelKey: "nav.support", icon: "🛟", gate: (c) => !c.isPublisher },
-    ],
-  },
-  {
-    phaseKey: "navMvp.phase3",
-    items: [
-      { to: "/app/rfq", labelKey: "nav.rfqOrders", icon: "📋", gate: (c) => !c.isPublisher },
-      { to: "/app/orders", labelKey: "nav.orderHistory", icon: "📦", gate: (c) => !c.isPublisher },
-      { to: "/app/invoices", labelKey: "nav.invoices", icon: "🧾", gate: (c) => !c.isPublisher },
-      { to: "/app/users", labelKey: "nav.userManagement", icon: "⚙", gate: (c) => !c.isPublisher || c.isAdmin },
-      { to: "/app/sync-logs", labelKey: "nav.syncLogs", icon: "🎧", gate: (c) => c.isAdmin },
-    ],
-  },
+type NavGroup = "discover" | "programs" | "operations";
+
+const GROUP_ORDER: NavGroup[] = ["discover", "programs", "operations"];
+
+const GROUP_LABEL_KEY: Record<NavGroup, string> = {
+  discover: "nav.sectionMain",
+  programs: "nav.sectionLearning",
+  operations: "nav.sectionOperations",
+};
+
+type NavItem = {
+  to: string;
+  labelKey: string;
+  icon: LucideIcon;
+  group: NavGroup;
+  gate?: (ctx: GateCtx) => boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { to: "/app", labelKey: "nav.dashboard", icon: LayoutDashboard, group: "discover" },
+  { to: "/app/catalogue", labelKey: "nav.catalogueLong", icon: BookOpen, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/library", labelKey: "nav.libraryBooks", icon: Landmark, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/kits", labelKey: "nav.kits", icon: Microscope, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/curriculum-mapping", labelKey: "nav.curriculumMapping", icon: MapIcon, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/demo-hub", labelKey: "nav.demoHub", icon: PlayCircle, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/wishlist", labelKey: "nav.wishlist", icon: Heart, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/announcements", labelKey: "nav.announcements", icon: Megaphone, group: "discover" },
+  { to: "/app/contacts", labelKey: "nav.contactDirectory", icon: Users, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/training", labelKey: "nav.productTraining", icon: GraduationCap, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/assessment", labelKey: "nav.assessment", icon: BarChart3, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/analytics", labelKey: "nav.analytics", icon: TrendingUp, group: "programs" },
+  { to: "/app/webinars", labelKey: "nav.pdWebinars", icon: Mic, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/resources", labelKey: "nav.resources", icon: FolderOpen, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/samples", labelKey: "nav.samples", icon: Package, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/certificates", labelKey: "nav.myCertificates", icon: Award, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/support", labelKey: "nav.support", icon: LifeBuoy, group: "programs", gate: (c) => !c.isPublisher },
+  { to: "/app/rfq", labelKey: "nav.rfqOrders", icon: ClipboardList, group: "operations", gate: (c) => !c.isPublisher },
+  { to: "/app/orders", labelKey: "nav.orderHistory", icon: ShoppingBag, group: "operations", gate: (c) => !c.isPublisher },
+  { to: "/app/invoices", labelKey: "nav.invoices", icon: Receipt, group: "operations", gate: (c) => !c.isPublisher },
+  { to: "/app/users", labelKey: "nav.userManagement", icon: UserCog, group: "operations", gate: (c) => !c.isPublisher || c.isAdmin },
+  { to: "/app/sync-logs", labelKey: "nav.syncLogs", icon: RefreshCw, group: "operations", gate: (c) => c.isAdmin },
 ];
 
 function navActive(to: string, pathname: string, search: string): boolean {
@@ -89,6 +115,7 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   const { pathname, search } = loc;
   const user = useAuthStore((s) => s.user)!;
   const school = useAuthStore((s) => s.school);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const ctx: GateCtx = useMemo(
     () => ({
@@ -99,6 +126,22 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
     [user.role],
   );
 
+  const visibleNav = useMemo(() => NAV_ITEMS.filter((i) => !i.gate || i.gate(ctx)), [ctx]);
+
+  const navSections = useMemo(() => {
+    const byGroup = new Map<NavGroup, NavItem[]>();
+    for (const item of visibleNav) {
+      const list = byGroup.get(item.group) ?? [];
+      list.push(item);
+      byGroup.set(item.group, list);
+    }
+    return GROUP_ORDER.filter((g) => (byGroup.get(g)?.length ?? 0) > 0).map((group) => ({
+      group,
+      labelKey: GROUP_LABEL_KEY[group],
+      items: byGroup.get(group)!,
+    }));
+  }, [visibleNav]);
+
   const roleLabel = useMemo(() => {
     const r = user.role.replace(/_/g, " ");
     return r.charAt(0) + r.slice(1).toLowerCase();
@@ -107,63 +150,88 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 z-[100] flex w-[240px] flex-col bg-[#0A3D62] transition-transform duration-300 ease-out md:translate-x-0",
+        "pw-school-sidebar fixed inset-y-0 z-[100] flex w-[240px] flex-col transition-transform duration-300 ease-out md:translate-x-0",
         mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
       )}
     >
-      <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-[#E8912D] font-serif text-lg font-normal text-white">
-          P
-        </div>
-        <div className="min-w-0">
-          <div className="text-[13px] font-semibold leading-tight text-white">Panworld</div>
-          <div className="text-[10px] font-light uppercase tracking-[0.08em] text-white/50">{t("navMvp.portalSubtitle")}</div>
-        </div>
+      <div className="border-b border-[var(--pw-border)] bg-white/50 px-5 py-4 backdrop-blur-sm">
+        {!logoFailed ? (
+          <div>
+            <img
+              src="/images.png"
+              alt="Panworld Education"
+              className="h-9 w-auto max-w-full object-contain object-left"
+              onError={() => setLogoFailed(true)}
+            />
+            <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pw-text-muted)]">
+              {t("navMvp.portalSubtitle")}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#7ec8e8] via-[#5cadce] to-[#4a9d7a] font-serif text-lg font-semibold text-white shadow-sm ring-1 ring-white/90">
+              P
+              <span className="absolute end-0.5 top-0.5 h-2 w-2 rounded-full bg-[#d64545] ring-1 ring-white/90" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold leading-tight text-[var(--pw-text)]">Panworld</div>
+              <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--pw-text-muted)]">
+                {t("navMvp.portalSubtitle")}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2.5 pb-3 pt-1">
-        {NAV.map((section) => {
-          const items = section.items.filter((i) => (i.gate ? i.gate(ctx) : true));
-          if (!items.length) return null;
-          return (
-            <div key={section.phaseKey} className="mb-1">
-              <div className="mx-2 mb-1 mt-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/35 first:mt-0">
-                {t(section.phaseKey)}
-              </div>
-              {items.map((item) => {
-                const active = navActive(item.to, pathname, search);
-                return (
-                  <Link
-                    key={`${section.phaseKey}-${item.labelKey}`}
-                    to={item.to}
-                    onClick={onNavigate}
+      <nav
+        className="flex-1 overflow-y-auto px-2.5 pb-4 pt-3"
+        aria-label={t("navMvp.portalSubtitle")}
+      >
+        {navSections.map(({ group, labelKey, items }) => (
+          <Fragment key={group}>
+            <div className="pw-nav-section-label">{t(labelKey)}</div>
+            {items.map((item) => {
+              const active = navActive(item.to, pathname, search);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={onNavigate}
+                  className={cn(
+                    "mb-0.5 flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] leading-snug no-underline transition-colors",
+                    active
+                      ? "bg-[var(--pw-muted)] font-medium text-[var(--pw-text)] ring-1 ring-[var(--pw-border)]"
+                      : "font-normal text-[var(--pw-text-secondary)] hover:bg-[var(--pw-muted)] hover:text-[var(--pw-text)]",
+                  )}
+                >
+                  <Icon
+                    size={16}
                     className={cn(
-                      "mb-px flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2.5 text-[13.5px] no-underline transition-colors",
-                      active
-                        ? "bg-white/15 font-medium text-white"
-                        : "font-normal text-white/65 hover:bg-white/[0.08] hover:text-white",
+                      "w-5 shrink-0",
+                      active ? "text-[var(--pw-logo-blue)]" : "text-[var(--pw-text-muted)]",
                     )}
-                  >
-                    <span className="w-5 shrink-0 text-center text-[15px]">{item.icon}</span>
-                    <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })}
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
+                </Link>
+              );
+            })}
+          </Fragment>
+        ))}
       </nav>
 
-      <div className="border-t border-white/10 px-4 py-3">
+      <div className="border-t border-[var(--pw-border)] bg-white/40 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#E8912D] text-[11px] font-semibold text-white">
+          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[var(--pw-brand)] text-[11px] font-semibold text-white ring-2 ring-[var(--pw-brand-light)]">
             {initials(user.firstName, user.lastName)}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[12.5px] font-medium text-white/80">
+            <div className="truncate text-[12.5px] font-medium text-[var(--pw-text)]">
               {user.firstName} {user.lastName}
             </div>
-            <div className="truncate text-[11px] text-white/40">{school?.name ?? roleLabel}</div>
+            <div className="truncate text-[11px] text-[var(--pw-text-muted)]">{school?.name ?? roleLabel}</div>
           </div>
         </div>
       </div>
