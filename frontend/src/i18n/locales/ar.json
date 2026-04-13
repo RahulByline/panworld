@@ -529,6 +529,8 @@
   },
   "admin": {
     "nav": {
+      "brandTitle": "إدارة بانورلد",
+      "brandSubtitle": "إدارة البوابة",
       "sectionOverview": "نظرة عامة",
       "sectionSchools": "المدارس",
       "sectionCatalog": "الكتالوج وإدارة المحتوى",

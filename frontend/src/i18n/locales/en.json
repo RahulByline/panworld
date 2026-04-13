@@ -529,6 +529,8 @@
   },
   "admin": {
     "nav": {
+      "brandTitle": "Panworld Admin",
+      "brandSubtitle": "Portal management",
       "sectionOverview": "Overview",
       "sectionSchools": "Schools",
       "sectionCatalog": "Catalog & CMS",
