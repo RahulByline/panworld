@@ -49,7 +49,14 @@ export function CatalogueProductPreviewModal({
         </div>
         <div>
           <dt className="text-xs font-semibold uppercase text-[#847F79]">{t("admin.pages.catalogue.colPrice")}</dt>
-          <dd className="font-semibold">{product.price}</dd>
+          <dd className="font-semibold">
+            {product.lineItems.length > 0 ? product.folderPriceLabel : product.price}
+            {product.lineItems.length > 0 ? (
+              <span className="mt-1 block text-[11px] font-normal text-[#847F79]">
+                {t("admin.cataloguePreview.folderPricingHint")}
+              </span>
+            ) : null}
+          </dd>
         </div>
         <div className="sm:col-span-2">
           <dt className="text-xs font-semibold uppercase text-[#847F79]">{t("common.status")}</dt>

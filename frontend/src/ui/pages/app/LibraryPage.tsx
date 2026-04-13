@@ -1,61 +1,69 @@
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useMemo, useState } from "react";
-import { mockProducts } from "../../../mock/data";
-import { useAuthStore } from "../../../store/auth.store";
-import { pubClassFromPublisher, stableEmoji } from "../../../data/school/mvpUi";
+import { useSearchParams } from "react-router-dom";
+import { catalogueHaystack, catalogueLibraryBooks, getCatalogueFolder } from "../../../data/admin/catalogue";
+import { useAdminToast } from "../../admin/hooks/useAdminToast";
+import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
+import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
 import { PwPageHeader } from "../../panworld/PwPageHeader";
-import { cn } from "../../utils/cn";
-
-type LibRow = {
-  id: string;
-  title: string;
-  sub: string;
-  tags: string[];
-  price: string;
-  emoji: string;
-  pubClass?: string;
-  bg?: string;
-};
-
-const STATIC_LIBRARY: LibRow[] = [
-  { id: "s_l1", title: "Oxford Reading Tree", sub: "Oxford · Lexile 200–500 · English", tags: ["Fiction", "G1–G3"], price: "AED 28 / set", emoji: "📖", pubClass: "pub-oxford" },
-  { id: "s_l2", title: "Collins Big Cats", sub: "Collins · Levelled Readers · English", tags: ["Non-Fiction", "G1–G5"], price: "AED 22 / book", emoji: "📚", pubClass: "pub-collins" },
-  { id: "s_l3", title: "STEM Readers Series", sub: "Pearson · Lexile 600–900 · English", tags: ["STEM", "G5–G9"], price: "AED 35 / book", emoji: "📗", bg: "#FFF8E1" },
-  { id: "s_l4", title: "Islamic Studies Readers", sub: "Oxford · Arabic & English · Bilingual", tags: ["Islamic Studies", "KG–G6"], price: "AED 30 / book", emoji: "🌙", bg: "#E8F5E9" },
-];
 
 export function LibraryPage() {
   const { t } = useTranslation();
-  const school = useAuthStore((s) => s.school);
-  const country = school?.country;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { show, Toast } = useAdminToast();
   const [q, setQ] = useState("");
 
-  const dynamicRows = useMemo((): LibRow[] => {
-    return mockProducts
-      .filter((p) => p.type === "LIBRARY")
-      .filter((p) => (country ? p.countryRelevance.includes(country) : true))
-      .slice(0, 8)
-      .map((p) => ({
-        id: `m_${p.id}`,
-        title: p.name,
-        sub: `${p.publisher} · ${p.edition}`,
-        tags: [p.subject ?? "Reading", p.grades ?? "—"],
-        price: `${country === "KSA" ? "SAR" : "AED"} ${Math.round(p.price)} / book`,
-        emoji: stableEmoji(p.name),
-        pubClass: pubClassFromPublisher(p.publisher),
-      }));
-  }, [country]);
+  const products = useMemo(() => catalogueLibraryBooks.filter((p) => p.status === "Published"), []);
 
   const rows = useMemo(() => {
-    const merged = [...STATIC_LIBRARY, ...dynamicRows];
-    const qq = q.trim().toLowerCase();
-    return merged.filter((r) => (qq ? `${r.title} ${r.sub}`.toLowerCase().includes(qq) : true));
-  }, [q, dynamicRows]);
+    const needle = q.trim().toLowerCase();
+    return products.filter((p) => (needle ? catalogueHaystack(p, "library").includes(needle) : true));
+  }, [q, products]);
+
+  const folderId = searchParams.get("folder");
+  const folderProductRaw = folderId ? getCatalogueFolder("library", folderId) : undefined;
+  const folderProduct = folderProductRaw?.status === "Published" ? folderProductRaw : undefined;
+
+  const openFolder = (id: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("folder", id);
+      return next;
+    });
+  };
+
+  const closeFolder = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("folder");
+      return next;
+    });
+  };
+
+  if (folderProduct) {
+    return (
+      <div className="font-sans">
+        <Toast />
+        <CatalogueFolderDetailView
+          tab="library"
+          mode="school"
+          product={folderProduct}
+          t={t}
+          onBack={closeFolder}
+          onAddBook={() => undefined}
+          onEditFolder={() => undefined}
+          onViewItem={() => show(t("common.view"))}
+          onAddToWishlist={() => show(t("mvpPages.catalogue.addWishlist"))}
+          onAddToRfq={() => show(t("mvpPages.catalogue.addRfq"))}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
+      <Toast />
       <PwPageHeader title={t("nav.libraryBooks")} subtitle={t("mvpPages.library.subtitle")} />
 
       <div className="pw-filter-bar">
@@ -99,47 +107,22 @@ export function LibraryPage() {
         </select>
       </div>
 
-      <div className="pw-grid-4">
-        {rows.map((r) => (
-          <div key={r.id} className="pw-product-card">
-            <div className={cn("pw-product-img !h-[120px]", r.pubClass)} style={r.bg ? { background: r.bg } : undefined}>
-              {r.emoji}
-            </div>
-            <div className="pw-product-body">
-              <div className="pw-product-title">{r.title}</div>
-              <div className="pw-product-sub">{r.sub}</div>
-              <div className="mb-2 flex flex-wrap gap-1">
-                {r.tags.map((tag) => (
-                  <span key={tag} className="pw-tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="pw-product-price">{r.price}</div>
-              <div className="pw-product-actions">
-                <Link to="/app/rfq" className="pw-btn pw-btn-primary pw-btn-xs no-underline">
-                  {t("mvpPages.library.libraryRfqCta")}
-                </Link>
-                <button type="button" className="pw-btn pw-btn-outline pw-btn-xs">
-                  ♡
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
+        {rows.map((p) => (
+          <CatalogueProductCard
+            key={p.id}
+            tab="library"
+            mode="school"
+            product={p}
+            t={t}
+            onOpenFolder={() => openFolder(p.id)}
+            onEdit={() => undefined}
+            onArchive={() => undefined}
+            onPublish={() => undefined}
+            onAddToWishlist={() => show(t("mvpPages.catalogue.addWishlist"))}
+            onAddToRfq={() => show(t("mvpPages.catalogue.addRfq"))}
+          />
         ))}
-      </div>
-
-      <div className="pw-card mt-6 border-[#0A3D62]/15 bg-[#D6EAF8]">
-        <div className="flex flex-col items-stretch gap-4 md:flex-row md:items-center md:gap-3">
-          <div className="text-2xl">📋</div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-[#0A3D62]">{t("mvpPages.library.bannerTitle")}</div>
-            <div className="mt-0.5 text-[13px] text-[#1A5276]">{t("mvpPages.library.bannerBody")}</div>
-          </div>
-          <Link to="/app/rfq" className="pw-btn pw-btn-primary pw-btn-sm shrink-0 whitespace-nowrap no-underline">
-            {t("mvpPages.library.viewLibraryRfq")}
-          </Link>
-        </div>
       </div>
     </div>
   );

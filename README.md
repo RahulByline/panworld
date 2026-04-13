@@ -12,7 +12,15 @@ Production-structured, demo-ready prototype for a multi-role, multi-phase school
 
 - `frontend/` React application
 - `backend/` Express REST API + MySQL `.sql` schema + seed
-- `docs/` documentation placeholders
+- `docs/` documentation (see below)
+
+### CMS & admin (top-down guide)
+
+For a **detailed, CMS-focused overview** — super-admin screens, school vs sales access matrix, catalogue folders, resources, announcements, and what is mock vs API-backed — see:
+
+**[docs/CMS_ADMIN_TOP_DOWN.md](./docs/CMS_ADMIN_TOP_DOWN.md)**
+
+> The product spec PDF **“Panworld Portal Master v4.pdf”** was not in the repo when that doc was written; add it under e.g. `docs/specs/` and cross-reference sections there.
 
 ## Quick start (local)
 

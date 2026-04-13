@@ -1,15 +1,14 @@
-import { useMemo, useState } from "react";
-import { NavLink, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { NavLink, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LayoutGrid, LayoutList, Search } from "lucide-react";
 import { Button } from "../../components/Button";
 import {
   catalogueByTab,
+  catalogueHaystack,
+  getCatalogueFolder,
   type CatalogueProductRow,
   type CatalogueTab,
-  kitMetaLine,
-  libraryMetaLine,
-  textbookMetaLine,
 } from "../../../data/admin/catalogue";
 import {
   KIT_GRADE_OPTIONS,
@@ -28,7 +27,8 @@ import {
 import { cn } from "../../utils/cn";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
 import { KitCatalogueModal, LibraryCatalogueModal, TextbookCatalogueModal } from "../../admin/components/catalogue/CatalogueModals";
-import { CatalogueProductPreviewModal } from "../../admin/components/CatalogueProductPreviewModal";
+import { CatalogueBookItemModal } from "../../admin/components/catalogue/CatalogueBookItemModal";
+import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
 import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
 
 function tabFromPath(pathname: string): CatalogueTab | null {
@@ -52,15 +52,9 @@ function matchesGradeBuckets(p: CatalogueProductRow, sel: string): boolean {
   return p.gradeBuckets?.includes(sel) ?? false;
 }
 
-function haystack(p: CatalogueProductRow, tab: CatalogueTab): string {
-  const meta = tab === "textbooks" ? textbookMetaLine(p) : tab === "library" ? libraryMetaLine(p) : kitMetaLine(p);
-  return [p.name, p.publisher, p.grades, p.format, p.detailLine, meta, p.readingLevel ?? "", p.genre ?? ""]
-    .join(" ")
-    .toLowerCase();
-}
-
 export function AdminCatalogueSegmentPage() {
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { show, Toast } = useAdminToast();
 
@@ -111,9 +105,10 @@ export function AdminCatalogueSegmentPage() {
   const products = catalogueByTab[tab ?? "textbooks"];
 
   const filtered = useMemo(() => {
+    if (!tab) return [];
     const needle = q.trim().toLowerCase();
     return products.filter((p) => {
-      if (needle && !haystack(p, tab!).includes(needle)) return false;
+      if (needle && !catalogueHaystack(p, tab).includes(needle)) return false;
 
       if (tab === "textbooks") {
         if (!matchesPublisher(p, tbPub, "textbooks")) return false;
@@ -157,9 +152,75 @@ export function AdminCatalogueSegmentPage() {
     kitGrade,
   ]);
 
-  const [previewProduct, setPreviewProduct] = useState<CatalogueProductRow | null>(null);
+  const [bookModalOpen, setBookModalOpen] = useState(false);
+
+  const folderId = searchParams.get("folder");
+  const folderProduct = tab && folderId ? getCatalogueFolder(tab, folderId) : undefined;
+
+  const prevPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevPathRef.current !== null && prevPathRef.current !== pathname) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("folder");
+        return next;
+      });
+    }
+    prevPathRef.current = pathname;
+  }, [pathname, setSearchParams]);
+
+  useEffect(() => {
+    if (folderId && tab && !getCatalogueFolder(tab, folderId)) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("folder");
+        return next;
+      });
+    }
+  }, [folderId, tab, setSearchParams]);
+
+  const openFolder = (id: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("folder", id);
+      return next;
+    });
+  };
+
+  const closeFolder = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("folder");
+      return next;
+    });
+  };
 
   if (!tab) return <Navigate to="/admin/cms/textbooks" replace />;
+
+  if (folderProduct) {
+    return (
+      <div className="font-sans">
+        <Toast />
+        <CatalogueFolderDetailView
+          tab={tab}
+          product={folderProduct}
+          t={t}
+          onBack={closeFolder}
+          onAddBook={() => setBookModalOpen(true)}
+          onEditFolder={() => setEditOpen(true)}
+          onViewItem={() => show(t("admin.pages.catalogueFolder.viewItemMock"))}
+        />
+        <CatalogueBookItemModal open={bookModalOpen} onClose={() => setBookModalOpen(false)} onSaved={show} mode="add" />
+        {tab === "textbooks" ? (
+          <TextbookCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
+        ) : tab === "library" ? (
+          <LibraryCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
+        ) : (
+          <KitCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
+        )}
+      </div>
+    );
+  }
 
   const selCls = "min-w-[130px] max-w-full rounded-lg border border-[#E2E0D9] bg-[#F5F4F0] px-3 py-2 text-[13px] text-[#1A1917] outline-none focus:border-[#0A3D62] sm:min-w-[140px]";
 
@@ -352,7 +413,15 @@ export function AdminCatalogueSegmentPage() {
               <tbody className="divide-y divide-[#E2E0D9]">
                 {filtered.map((p) => (
                   <tr key={p.id} className="hover:bg-[#FAFAF8]">
-                    <td className="px-4 py-3 font-semibold text-[#1A1917]">{p.name}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        className="text-left font-semibold text-[#0A3D62] hover:underline"
+                        onClick={() => openFolder(p.id)}
+                      >
+                        {p.name}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">{p.publisher}</td>
                     <td className="px-4 py-3">{p.grades}</td>
                     <td className="px-4 py-3">{p.format}</td>
@@ -360,8 +429,7 @@ export function AdminCatalogueSegmentPage() {
                       {p.detailLine}
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      {p.price}
-                      {p.priceUnit ?? ""}
+                      {p.lineItems.length > 0 ? p.folderPriceLabel : `${p.price}${p.priceUnit ?? ""}`}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -377,7 +445,7 @@ export function AdminCatalogueSegmentPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap justify-end gap-2">
-                        <Button type="button" variant="secondary" size="sm" onClick={() => setPreviewProduct(p)}>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => openFolder(p.id)}>
                           {t("common.view")}
                         </Button>
                         <Button type="button" size="sm" className="bg-[#0A3D62] text-white hover:bg-[#071E36]" onClick={() => setEditOpen(true)}>
@@ -392,23 +460,21 @@ export function AdminCatalogueSegmentPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((p) => (
             <CatalogueProductCard
               key={p.id}
               tab={tab}
               product={p}
               t={t}
+              onOpenFolder={() => openFolder(p.id)}
               onEdit={() => setEditOpen(true)}
-              onView={() => setPreviewProduct(p)}
               onArchive={() => show(t("admin.pages.catalogueSegment.archived"))}
               onPublish={() => show(t("admin.pages.catalogueSegment.published"))}
             />
           ))}
         </div>
       )}
-
-      <CatalogueProductPreviewModal open={!!previewProduct} onClose={() => setPreviewProduct(null)} product={previewProduct} />
 
       {tab === "textbooks" ? (
         <>

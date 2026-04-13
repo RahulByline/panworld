@@ -227,6 +227,7 @@
     "dashboard": "Dashboard",
     "catalogue": "Catalogue",
     "catalogueLong": "Catalogue & Titles",
+    "cmsTextbooks": "Textbooks",
     "libraryBooks": "Library Books",
     "kits": "Kits",
     "wishlist": "Wishlist",
@@ -319,7 +320,21 @@
       "accessDemo": "Access demo",
       "addRfq": "Add to RFQ",
       "requestSample": "Request sample",
-      "addWishlist": "Add to wishlist"
+      "addWishlist": "Add to wishlist",
+      "folderHeroPrice": "From {{unit}} {{price}} per student · series folder",
+      "accessExpiredTitle": "School access to this series has expired",
+      "accessExpiredBody": "Your licence for this catalogue folder is no longer active. Request renewal and our team will confirm pricing and access.",
+      "requestAccess": "Request access",
+      "accessRequested": "Request sent (demo). Panworld will contact your school admin.",
+      "passwordProtectedHint": "Some digital assets in this folder may require a password after access is granted.",
+      "folderItemsTitle": "Books & SKUs in this series",
+      "folderItemsSub": "ISBN and list price are stored per item. RFQs and orders typically reference individual grades.",
+      "colGrade": "Grade / band",
+      "colTitle": "Title",
+      "colIsbn": "ISBN",
+      "colPrice": "List price",
+      "folderPricingSidebar": "Per-item pricing (lowest grade shown)",
+      "folderPricingFrom": "from (per student)"
     },
     "library": {
       "subtitle": "Supplementary reading and library titles — separate from core textbooks",
@@ -391,7 +406,10 @@
       "nudge": "2 items added 30+ days ago.",
       "nudge2": "Your account manager has been notified. Still interested?",
       "dismiss": "Dismiss",
-      "view": "View"
+      "view": "View",
+      "removeAria": "Remove from wishlist",
+      "removedToast": "Removed from wishlist (demo).",
+      "empty": "Your wishlist is empty. Browse the catalogue to add titles."
     },
     "announcements": {
       "title": "Announcements & New Titles",
@@ -471,7 +489,7 @@
       "allPublishers": "All Publishers",
       "allTypes": "All Types",
       "allSubjects": "All Subjects",
-      "download": "⬇ Download"
+      "download": "Download"
     },
     "sampleRequests": {
       "subtitle": "Request physical sample copies of books and kits — tracked from request to delivery",
@@ -1023,6 +1041,12 @@
         "subtitle": "18 educational kits · Science, phonics, and collaboration kits",
         "add": "+ Add kit"
       },
+      "catalogueCard": {
+        "eyebrowTextbook": "TEXTBOOK",
+        "eyebrowLibrary": "LIBRARY",
+        "eyebrowKit": "KIT",
+        "ctaOpenFolder": "Open folder →"
+      },
       "catalogueSegment": {
         "cardView": "Cards",
         "listView": "List",
@@ -1038,6 +1062,65 @@
         "noResults": "No products match your filters.",
         "colDetail": "ISBN / detail",
         "colStatus": "Status"
+      },
+      "catalogueFolder": {
+        "back": "Back to catalogue",
+        "openFolder": "Open",
+        "editFolder": "Edit folder",
+        "addBook": "+ Add book / SKU",
+        "accessTitle": "Folder access (school portal)",
+        "accessBody": "Control whether this series requires a password for digital assets, and whether the school’s entitlement is active.",
+        "passwordProtectedOn": "Password protected",
+        "passwordProtectedOff": "Not password protected",
+        "schoolAccessExpired": "School access expired",
+        "schoolAccessActive": "School access active",
+        "accessFootnote": "Expiry and passwords are demo flags — wire to entitlements in production.",
+        "pricingModel": "Pricing model",
+        "pricingModelBody": "List price and ISBN are maintained per book or SKU inside the folder, not on the series card.",
+        "itemsTitle": "Line items ({{count}})",
+        "itemsTitleCards": "Books & SKUs ({{count}})",
+        "itemsCardsHint": "Card view — cover, ISBN, and price are stored per item.",
+        "colBand": "Band / SKU",
+        "colTitle": "Title",
+        "colIsbn": "ISBN",
+        "colPrice": "List price",
+        "colStatus": "Status",
+        "demoHint": "Demo only — line items are static mock data.",
+        "passwordGateTitle": "Password required",
+        "passwordGateBody": "This folder is protected. Enter the passcode to view books and SKUs.",
+        "passwordGatePlaceholder": "Enter passcode",
+        "passwordGateSubmit": "Unlock folder",
+        "passwordGateError": "Incorrect passcode. Try again.",
+        "passwordGateHint": "Demo passcode: 1234",
+        "viewItemMock": "Line item detail (mock).",
+        "bookModalTitleAdd": "Add book / line item",
+        "bookModalTitleEdit": "Edit book / line item",
+        "bookModalIntro": "Capture each purchasable unit: one row per grade book, stage pack, or kit component.",
+        "bookModalDisplayTitle": "Display title",
+        "bookModalDisplayTitlePh": "e.g. Inspire Science Grade 4 Student Edition",
+        "bookModalGradeOrBand": "Grade / band / component",
+        "bookModalInternalSku": "Internal SKU",
+        "bookModalIsbn": "ISBN (print or bundle)",
+        "bookModalFormat": "Format",
+        "bookModalListPrice": "List price (AED)",
+        "bookModalPriceUnit": "Price unit",
+        "bookModalStatus": "Status",
+        "bookModalInventoryHint": "Notes",
+        "bookModalInventoryPlaceholder": "MOQ, stock, replacement ISBN…",
+        "bookModalNote": "Saving publishes this line item to the school catalogue and RFQ catalogue for the grades it covers.",
+        "bookModalSavedDraft": "Line item saved as draft (mock).",
+        "bookModalSavedPublish": "Line item saved (mock).",
+        "bookModalSave": "Save line item",
+        "bookModalCover": "Cover image",
+        "bookModalUploadCover": "Upload cover",
+        "bookModalCoverSub": "PNG, JPG · shown on line-item card",
+        "bookModalMaterialSection": "Resource link or file",
+        "bookModalMaterialHint": "Add a public link, or upload a file — PDF, PowerPoint, Excel, or other supported formats. Use one or both.",
+        "bookModalLinkUrl": "Resource link (URL)",
+        "bookModalLinkPlaceholder": "https://publisher.example.com/resource/…",
+        "bookModalFileUpload": "Upload file",
+        "bookModalFileUploadTitle": "Upload file",
+        "bookModalFileUploadSub": "PDF, PPT, PPTX, XLS, XLSX, CSV, and other office formats"
       },
       "users": {
         "title": "User management",
@@ -1286,7 +1369,8 @@
     },
     "cataloguePreview": {
       "openSchoolPortal": "Open school catalogue (new tab)",
-      "hint": "This is an admin preview. School users see the live storefront with pricing for their region."
+      "hint": "This is an admin preview. School users see the live storefront with pricing for their region.",
+      "folderPricingHint": "Folder uses per-item pricing — open the folder to see each ISBN and price."
     },
     "resourcesUploadModal": {
       "title": "Upload resource",
@@ -1367,6 +1451,10 @@
       "renewStarted": "Renewal workflow started (mock)."
     },
     "catalogueModals": {
+      "folderSeriesHint": "This form defines the series folder only. ISBN, list price, and sample pages are added per book or SKU inside the folder — not here.",
+      "folderMediaHint": "Optional image for the folder card in the admin catalogue list. Each book gets its own cover when you add line items.",
+      "folderListingImage": "Folder listing image",
+      "uploadFolderCover": "Upload folder image",
       "textbookAdd": "Add textbook",
       "textbookEdit": "Edit textbook",
       "libraryAdd": "Add library book",
