@@ -109,9 +109,7 @@ export function LoginPage() {
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Signing in…" : t("auth.continue")}
         </Button>
-
-        <div className="text-center text-xs text-slate-500">Protected by secure session controls and audit-ready access.</div>
-      </form>
+     </form>
 
       <div className="mt-6 flex-1" />
 

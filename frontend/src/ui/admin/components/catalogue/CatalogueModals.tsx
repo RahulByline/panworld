@@ -17,7 +17,7 @@ function Toggle({ label: text, defaultOn }: { label: string; defaultOn?: boolean
   );
 }
 
-function UploadZone({ icon, title, sub }: { icon: string; title: string; sub: string }) {
+export function UploadZone({ icon, title, sub }: { icon: string; title: string; sub: string }) {
   return (
     <button
       type="button"
@@ -69,6 +69,9 @@ export function TextbookCatalogueModal({ open, onClose, onSaved, mode }: ModalBa
         </div>
       }
     >
+      <p className="rounded-lg border border-[#E2E0D9] bg-[#FAFAF8] px-3 py-2.5 text-[13px] leading-relaxed text-[#5C5A55]">
+        {t("admin.catalogueModals.folderSeriesHint")}
+      </p>
       <div className={sec}>{t("admin.catalogueModals.sectionIdentity")}</div>
       <div className={row2}>
         <div>
@@ -87,17 +90,11 @@ export function TextbookCatalogueModal({ open, onClose, onSaved, mode }: ModalBa
           <input className={inp} placeholder={t("admin.catalogueModals.seriesPlaceholder")} />
         </div>
       </div>
-      <div className={row2}>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.fullTitle")} *</label>
-          <input className={inp} placeholder={t("admin.catalogueModals.fullTitlePh")} />
-        </div>
-        <div>
-          <label className={lbl}>ISBN</label>
-          <input className={inp} placeholder="978-X-XXX-XXXXX-X" />
-        </div>
+      <div className="mt-3">
+        <label className={lbl}>{t("admin.catalogueModals.fullTitle")} *</label>
+        <input className={inp} placeholder={t("admin.catalogueModals.fullTitlePh")} />
       </div>
-      <div className={row3}>
+      <div className={`${row2} mt-3`}>
         <div>
           <label className={lbl}>{t("admin.catalogueModals.edition")}</label>
           <input className={inp} placeholder="2025 Edition" />
@@ -109,10 +106,6 @@ export function TextbookCatalogueModal({ open, onClose, onSaved, mode }: ModalBa
             <option>Digital</option>
             <option>Blended</option>
           </select>
-        </div>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.priceAed")} *</label>
-          <input className={inp} type="number" placeholder="0.00" />
         </div>
       </div>
       <div className={sec}>{t("admin.catalogueModals.sectionCurriculum")}</div>
@@ -173,15 +166,10 @@ export function TextbookCatalogueModal({ open, onClose, onSaved, mode }: ModalBa
         <textarea className={`${inp} min-h-[72px]`} placeholder={t("admin.catalogueModals.tocPh")} />
       </div>
       <div className={sec}>{t("admin.catalogueModals.sectionMedia")}</div>
-      <div className={row2}>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.coverImage")}</label>
-          <UploadZone icon="🖼" title={t("admin.catalogueModals.uploadCover")} sub="PNG, JPG · max 5MB" />
-        </div>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.samplePdf")}</label>
-          <UploadZone icon="📄" title={t("admin.catalogueModals.uploadPdf")} sub="PDF · max 20MB" />
-        </div>
+      <p className="mb-2 text-[12px] text-[#5C5A55]">{t("admin.catalogueModals.folderMediaHint")}</p>
+      <div>
+        <label className={lbl}>{t("admin.catalogueModals.folderListingImage")}</label>
+        <UploadZone icon="🖼" title={t("admin.catalogueModals.uploadFolderCover")} sub="PNG, JPG · optional · folder card in catalogue" />
       </div>
       <div className={sec}>{t("admin.catalogueModals.sectionTerritory")}</div>
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">

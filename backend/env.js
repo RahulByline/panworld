@@ -31,7 +31,8 @@ module.exports = {
   getDbConfig,
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || "",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
-  JWT_ACCESS_TTL_SECONDS: Number(process.env.JWT_ACCESS_TTL_SECONDS || 900),
+  /** Default 3 hours; override with JWT_ACCESS_TTL_SECONDS in .env */
+  JWT_ACCESS_TTL_SECONDS: Number(process.env.JWT_ACCESS_TTL_SECONDS || 60 * 60 * 3),
   JWT_REFRESH_TTL_SECONDS: Number(process.env.JWT_REFRESH_TTL_SECONDS || 60 * 60 * 24 * 30),
   CORS_ORIGINS: corsOrigins,
   FILE_PUBLIC_BASE: (process.env.FILE_PUBLIC_BASE_URL || `http://localhost:${port}`).replace(/\/+$/, ""),

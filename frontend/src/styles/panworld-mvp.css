@@ -2666,3 +2666,113 @@
 .pw-app .pw-nav-section-label:first-child {
   padding-top: 4px;
 }
+
+/* Admin CMS — catalogue cards (split layout like school dashboard; not links) */
+.pw-app .pw-kc-card--admin-cms {
+  cursor: default;
+  text-decoration: none;
+}
+/* Tight card: height follows content (no forced min); left column no longer space-between gap */
+.pw-app .pw-kc-card--admin-cms.pw-kc-card--catalogue-grid {
+  min-height: 0;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-left {
+  justify-content: flex-start;
+  padding: 14px 15px 12px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-left::before {
+  top: -22px;
+  right: -22px;
+  width: 76px;
+  height: 76px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-badge {
+  margin-bottom: 5px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-subtitle {
+  margin-bottom: 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-title {
+  margin-bottom: 5px;
+  font-size: clamp(0.88rem, 1vw, 1rem);
+  line-height: 1.15;
+  letter-spacing: 0.035em;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-body {
+  line-height: 1.5;
+  font-size: 11px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-body--meta {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-publisher {
+  color: #0a3d62;
+  font-weight: 600;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-meta-sep {
+  color: #94a3a0;
+  font-weight: 400;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-meta-rest {
+  color: #5c7268;
+  font-weight: 400;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-price {
+  margin-top: 5px;
+  font-size: 12px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-right {
+  width: 158px;
+  background: #e5e2dc !important;
+  padding: 0;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-right::before,
+.pw-app .pw-kc-card--admin-cms .pw-kc-right::after {
+  display: none;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-right--collage {
+  display: flex;
+  align-items: stretch;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-collage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  width: 100%;
+  aspect-ratio: 79 / 100;
+  min-height: 0;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-collage-cell {
+  min-height: 0;
+  min-width: 0;
+  background: #d4d0c8;
+  overflow: hidden;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-collage-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.pw-app .pw-kc-card--admin-cms .pw-kc-admin-actions .pw-btn {
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .pw-app .pw-kc-card--admin-cms .pw-kc-right {
+    width: 128px;
+  }
+}

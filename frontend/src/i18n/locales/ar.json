@@ -227,6 +227,7 @@
     "dashboard": "لوحة التحكم",
     "catalogue": "الكتالوج",
     "catalogueLong": "الكتالوج والعناوين",
+    "cmsTextbooks": " المدرسية",
     "libraryBooks": "كتب المكتبة",
     "kits": "الأطقم",
     "wishlist": "قائمة الرغبات",
@@ -319,7 +320,21 @@
       "accessDemo": "الوصول التجريبي",
       "addRfq": "إضافة إلى طلب التسعير",
       "requestSample": "طلب عينة",
-      "addWishlist": "إضافة إلى قائمة الرغبات"
+      "addWishlist": "إضافة إلى قائمة الرغبات",
+      "folderHeroPrice": "من {{unit}} {{price}} لكل طالب · مجلد السلسلة",
+      "accessExpiredTitle": "انتهت صلاحية وصول مدرستك لهذه السلسلة",
+      "accessExpiredBody": "انتهت ترخيص الكتالوج لهذا المجلد. اطلب التجديد وسيتأكد فريقنا من الأسعار والوصول.",
+      "requestAccess": "طلب الوصول",
+      "accessRequested": "تم إرسال الطلب (تجريبي). سيتواصل بان وورلد مع مسؤول مدرستك.",
+      "passwordProtectedHint": "قد تتطلب بعض الأصول الرقمية في هذا المجلد كلمة مرور بعد منح الوصول.",
+      "folderItemsTitle": "الكتب والوحدات في هذه السلسلة",
+      "folderItemsSub": "يُخزَّى رقم ISBN وسعر القائمة لكل بند. طلبات التسعير والطلبات تشير عادةً إلى صفوف محددة.",
+      "colGrade": "الصف / النطاق",
+      "colTitle": "العنوان",
+      "colIsbn": "ISBN",
+      "colPrice": "سعر القائمة",
+      "folderPricingSidebar": "تسعير لكل بند (أدنى صف معروض)",
+      "folderPricingFrom": "ابتداءً (للطالب)"
     },
     "library": {
       "subtitle": "قراءة تكميلية وعناوين المكتبة — منفصلة عن الكتب المدرسية الأساسية",
@@ -391,7 +406,10 @@
       "nudge": "عنصران أُضيفا منذ أكثر من 30 يوماً.",
       "nudge2": "تم إشعار مدير حسابك. ما زلتم مهتمين؟",
       "dismiss": "تجاهل",
-      "view": "عرض"
+      "view": "عرض",
+      "removeAria": "إزالة من قائمة الرغبات",
+      "removedToast": "تمت الإزالة من قائمة الرغبات (تجريبي).",
+      "empty": "قائمة رغباتك فارغة. تصفّح الكتالوج لإضافة عناوين."
     },
     "announcements": {
       "title": "الإعلانات والعناوين الجديدة",
@@ -471,7 +489,7 @@
       "allPublishers": "كل الناشرين",
       "allTypes": "كل الأنواع",
       "allSubjects": "كل المواد",
-      "download": "⬇ تنزيل"
+      "download": "تنزيل"
     },
     "sampleRequests": {
       "subtitle": "طلب نسخ عينة من الكتب والأطقم — متابعة من الطلب حتى التسليم",
@@ -529,6 +547,8 @@
   },
   "admin": {
     "nav": {
+      "brandTitle": "إدارة بانورلد",
+      "brandSubtitle": "إدارة البوابة",
       "sectionOverview": "نظرة عامة",
       "sectionSchools": "المدارس",
       "sectionCatalog": "الكتالوج وإدارة المحتوى",
@@ -934,6 +954,12 @@
         "subtitle": "18 طقماً تعليمياً · علوم وفونيكس وأطقم تعاونية",
         "add": "+ إضافة طقم"
       },
+      "catalogueCard": {
+        "eyebrowTextbook": "كتاب مدرسي",
+        "eyebrowLibrary": "مكتبة",
+        "eyebrowKit": "طقم",
+        "ctaOpenFolder": "فتح المجلد ←"
+      },
       "catalogueSegment": {
         "cardView": "بطاقات",
         "listView": "قائمة",
@@ -949,6 +975,65 @@
         "noResults": "لا منتجات تطابق المرشحات.",
         "colDetail": "ISBN / تفاصيل",
         "colStatus": "الحالة"
+      },
+      "catalogueFolder": {
+        "back": "العودة إلى الكتالوج",
+        "openFolder": "فتح",
+        "editFolder": "تعديل المجلد",
+        "addBook": "+ إضافة كتاب / وحدة",
+        "accessTitle": "وصول المجلد (بوابة المدرسة)",
+        "accessBody": "تحكم فيما إذا كانت السلسلة تتطلب كلمة مرور للأصول الرقمية، وما إذا كانت ترخيص المدرسة ساريًا.",
+        "passwordProtectedOn": "محمي بكلمة مرور",
+        "passwordProtectedOff": "غير محمي بكلمة مرور",
+        "schoolAccessExpired": "انتهى وصول المدرسة",
+        "schoolAccessActive": "وصول المدرسة نشط",
+        "accessFootnote": "انتهاء الصلاحية وكلمات المرور للعرض التجريبي — اربطها بالتراخيص في الإنتاج.",
+        "pricingModel": "نموذج التسعير",
+        "pricingModelBody": "يُحفظ سعر القائمة وISBN لكل كتاب أو وحدة داخل المجلد، وليس على بطاقة السلسلة.",
+        "itemsTitle": "بنود السطر ({{count}})",
+        "itemsTitleCards": "الكتب والوحدات ({{count}})",
+        "itemsCardsHint": "عرض البطاقات — الغلاف وISBN والسعر لكل بند.",
+        "colBand": "النطاق / الوحدة",
+        "colTitle": "العنوان",
+        "colIsbn": "ISBN",
+        "colPrice": "سعر القائمة",
+        "colStatus": "الحالة",
+        "demoHint": "عرض تجريبي فقط — البنود ثابتة وهمية.",
+        "passwordGateTitle": "كلمة مرور مطلوبة",
+        "passwordGateBody": "هذا المجلد محمي. أدخل رمز الدخول لعرض الكتب والوحدات.",
+        "passwordGatePlaceholder": "أدخل الرمز",
+        "passwordGateSubmit": "فتح المجلد",
+        "passwordGateError": "رمز غير صحيح. حاول مرة أخرى.",
+        "passwordGateHint": "رمز العرض التجريبي: 1234",
+        "viewItemMock": "تفاصيل البند (وهمي).",
+        "bookModalTitleAdd": "إضافة كتاب / بند سطر",
+        "bookModalTitleEdit": "تعديل كتاب / بند سطر",
+        "bookModalIntro": "سجّل كل وحدة قابلة للشراء: صف واحد لكل كتاب صفي أو حزمة مرحلة أو مكوّن طقم.",
+        "bookModalDisplayTitle": "العنوان المعروض",
+        "bookModalDisplayTitlePh": "مثال: Inspire Science الصف الرابع طبعة الطالب",
+        "bookModalGradeOrBand": "الصف / النطاق / المكوّن",
+        "bookModalInternalSku": "SKU داخلي",
+        "bookModalIsbn": "ISBN (مطبوع أو حزمة)",
+        "bookModalFormat": "الصيغة",
+        "bookModalListPrice": "سعر القائمة (درهم)",
+        "bookModalPriceUnit": "وحدة السعر",
+        "bookModalStatus": "الحالة",
+        "bookModalInventoryHint": "ملاحظات",
+        "bookModalInventoryPlaceholder": "الحد الأدنى للطلب، المخزون، ISBN البديل…",
+        "bookModalNote": "يؤدي الحفظ إلى نشر هذا البند في كتالوج المدرسة وكتالوج طلبات التسعير للصفوف التي يغطيها.",
+        "bookModalSavedDraft": "تم حفظ البند كمسودة (وهمي).",
+        "bookModalSavedPublish": "تم حفظ البند (وهمي).",
+        "bookModalSave": "حفظ البند",
+        "bookModalCover": "صورة الغلاف",
+        "bookModalUploadCover": "رفع الغلاف",
+        "bookModalCoverSub": "PNG أو JPG · تظهر على بطاقة البند",
+        "bookModalMaterialSection": "رابط أو ملف للمورد",
+        "bookModalMaterialHint": "أضف رابطًا عامًا، أو ارفع ملفًا — PDF أو PowerPoint أو Excel أو صيغ مدعومة أخرى. يمكن استخدام أحدهما أو كليهما.",
+        "bookModalLinkUrl": "رابط المورد (URL)",
+        "bookModalLinkPlaceholder": "https://…",
+        "bookModalFileUpload": "رفع ملف",
+        "bookModalFileUploadTitle": "رفع ملف",
+        "bookModalFileUploadSub": "PDF وPPT وPPTX وXLS وXLSX وCSV وصيغ مكتبية أخرى"
       },
       "announcements": {
         "title": "إدارة المحتوى — الإعلانات",
@@ -1195,7 +1280,8 @@
     },
     "cataloguePreview": {
       "openSchoolPortal": "فتح كتالوج المدرسة (تبويب جديد)",
-      "hint": "معاينة للمسؤول. يرى مستخدمو المدرسة المتجر الحي مع الأسعار لمنطقتهم."
+      "hint": "معاينة للمسؤول. يرى مستخدمو المدرسة المتجر الحي مع الأسعار لمنطقتهم.",
+      "folderPricingHint": "المجلد يستخدم تسعيرًا لكل بند — افتح المجلد لرؤية كل ISBN وسعر."
     },
     "resourcesUploadModal": {
       "title": "رفع مورد",
@@ -1276,6 +1362,10 @@
       "renewStarted": "بدء تجديد الاشتراك (وهمي)."
     },
     "catalogueModals": {
+      "folderSeriesHint": "يحدّد هذا النموذج مجلد السلسلة فقط. يُضاف رقم ISBN وسعر القائمة وعينات الصفحات لكل كتاب أو وحدة داخل المجلد — وليس هنا.",
+      "folderMediaHint": "صورة اختيارية لبطاقة المجلد في قائمة الكتالوج. يحصل كل كتاب على غلاف خاص عند إضافة بنود السطر.",
+      "folderListingImage": "صورة قائمة المجلد",
+      "uploadFolderCover": "رفع صورة المجلد",
       "textbookAdd": "إضافة كتاب مدرسي",
       "textbookEdit": "تعديل كتاب مدرسي",
       "libraryAdd": "إضافة كتاب مكتبة",

@@ -27,7 +27,7 @@ async function testConnection() {
         error.message,
       );
     } else if (error.code === "ECONNREFUSED") {
-      console.error("[db] Cannot reach MySQL — check DB_HOST and DB_PORT in backend/.env.");
+      console.error("[db] Cannot reach MySQL — check DB_HOST and DB_PORT in backend/.env.", error.message);
     } else {
       console.error("[db] Database connection failed:", error.message);
     }

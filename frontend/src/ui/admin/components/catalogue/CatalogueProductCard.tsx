@@ -1,26 +1,38 @@
 import type { TFunction } from "i18next";
+import { Heart, X } from "lucide-react";
 import { Button } from "../../../components/Button";
-import type { CatalogueHeaderKey, CatalogueProductRow, CatalogueTab } from "../../../../data/admin/catalogue";
-import { kitMetaLine, libraryMetaLine, textbookMetaLine } from "../../../../data/admin/catalogue";
-import { getCatalogueCardIcon } from "./catalogueCardIcons";
+import type { CatalogueProductRow, CatalogueTab } from "../../../../data/admin/catalogue";
+import {
+  defaultLineItemCoverUrl,
+  kitMetaLineParts,
+  libraryMetaLineParts,
+  textbookMetaLineParts,
+} from "../../../../data/admin/catalogue";
+import { knowledgeCardThemeFromId } from "../../../school/KnowledgeProductCard";
+import { cn } from "../../../utils/cn";
 
-const HEADER_BG: Record<CatalogueHeaderKey, string> = {
-  mh: "bg-[#FFF8E1]",
-  math: "bg-[#FFF9C4]",
-  kodeit: "bg-[#EDE7F6]",
-  digital: "bg-[#E3F2FD]",
-  oxford: "bg-[#E8F5E9]",
-  teal: "bg-[#E0F2F1]",
-  amber: "bg-[#FFF8E1]",
-  mint: "bg-[#E8F5E9]",
-  jolly: "bg-[#FCE4EC]",
-  stem: "bg-[#E8EAF6]",
-  robotics: "bg-[#EDE7F6]",
-  art: "bg-[#F3F4F6]",
-  scholastic: "bg-[#E1F5FE]",
-  ng: "bg-[#E0F7FA]",
-  default: "bg-[#F5F4F0]",
-};
+function collageCoverUrls(p: CatalogueProductRow): string[] {
+  return [0, 1, 2, 3].map((i) => {
+    const li = p.lineItems[i];
+    if (li) return li.coverImageUrl ?? defaultLineItemCoverUrl(li.id);
+    return defaultLineItemCoverUrl(`${p.id}-collage-${i}`);
+  });
+}
+
+function FolderCoverCollage({ product }: { product: CatalogueProductRow }) {
+  const urls = collageCoverUrls(product);
+  return (
+    <div className="pw-kc-right pw-kc-right--collage" aria-hidden>
+      <div className="pw-kc-collage-grid">
+        {urls.map((src, i) => (
+          <div key={`${product.id}-collage-${i}`} className="pw-kc-collage-cell">
+            <img src={src} alt="" loading="lazy" decoding="async" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /** Pastel fill + strong text + light ring — matches admin reference cards */
 function contentBadgeClass(label: string): string {
@@ -62,88 +74,176 @@ function Tag({ children, className }: { children: string; className: string }) {
   );
 }
 
-function metaForTab(tab: CatalogueTab, p: CatalogueProductRow): string {
-  if (tab === "textbooks") return textbookMetaLine(p);
-  if (tab === "library") return libraryMetaLine(p);
-  return kitMetaLine(p);
+function metaPartsForTab(tab: CatalogueTab, p: CatalogueProductRow) {
+  if (tab === "textbooks") return textbookMetaLineParts(p);
+  if (tab === "library") return libraryMetaLineParts(p);
+  return kitMetaLineParts(p);
 }
 
 function detailForTab(tab: CatalogueTab, p: CatalogueProductRow): string {
+  if (p.lineItems.length > 0) return p.folderDetailSummary;
   if (tab === "kits" && p.kitDetailLine) return p.kitDetailLine;
   return p.detailLine;
+}
+
+function eyebrowForTab(tab: CatalogueTab, t: TFunction): string {
+  if (tab === "textbooks") return t("admin.pages.catalogueCard.eyebrowTextbook");
+  if (tab === "library") return t("admin.pages.catalogueCard.eyebrowLibrary");
+  return t("admin.pages.catalogueCard.eyebrowKit");
 }
 
 type Props = {
   tab: CatalogueTab;
   product: CatalogueProductRow;
   t: TFunction;
+  /** `wishlist`: school card with remove (✕) instead of heart */
+  mode?: "admin" | "school" | "wishlist";
   onEdit: () => void;
-  onView: () => void;
   onArchive: () => void;
   onPublish: () => void;
+  onOpenFolder: () => void;
+  onAddToWishlist?: () => void;
+  onAddToRfq?: () => void;
+  onRemoveFromWishlist?: () => void;
 };
 
-export function CatalogueProductCard({ tab, product: p, t, onEdit, onView, onArchive, onPublish }: Props) {
-  const headerBg = HEADER_BG[p.headerKey] ?? HEADER_BG.default;
+export function CatalogueProductCard({
+  tab,
+  product: p,
+  t,
+  mode = "admin",
+  onEdit,
+  onArchive,
+  onPublish,
+  onOpenFolder,
+  onAddToWishlist,
+  onAddToRfq,
+  onRemoveFromWishlist,
+}: Props) {
   const showStock = tab === "kits" && p.status === "Published";
-  const CardIcon = getCatalogueCardIcon(p.cardIcon);
+  const theme = knowledgeCardThemeFromId(p.id);
+  const eyebrow = eyebrowForTab(tab, t);
+  const subLine = `${eyebrow} · ${p.curriculum}`;
+  const metaParts = metaPartsForTab(tab, p);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E0D9] bg-white shadow-sm">
-      <div className={`relative flex min-h-[152px] flex-col ${headerBg}`}>
-        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-2.5 pt-2.5">
-          <div className="flex min-w-0 flex-1 flex-wrap content-start gap-1.5 pr-1">
-            {p.badges.map((b) => (
-              <Tag key={b} className={contentBadgeClass(b)}>
-                {b.toUpperCase()}
-              </Tag>
-            ))}
-            {showStock ? (
-              <Tag className={inStockBadgeClass()}>{t("admin.pages.catalogueSegment.inStock").toUpperCase()}</Tag>
-            ) : null}
+    <div
+      className={cn("pw-kc-card pw-kc-card--catalogue-grid pw-kc-card--admin-cms", `pw-kc-card--${theme}`)}
+      role="group"
+      aria-label={p.name}
+    >
+      <div className="pw-kc-left">
+        <div className="pw-kc-left-inner">
+          <div className="pw-kc-badge flex flex-wrap items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap content-start gap-1.5">
+              {p.badges.map((b) => (
+                <Tag key={b} className={contentBadgeClass(b)}>
+                  {b.toUpperCase()}
+                </Tag>
+              ))}
+              {showStock ? (
+                <Tag className={inStockBadgeClass()}>{t("admin.pages.catalogueSegment.inStock").toUpperCase()}</Tag>
+              ) : null}
+            </div>
+            {mode === "admin" ? <Tag className={`shrink-0 ${statusBadgeClass(p.status)}`}>{p.status.toUpperCase()}</Tag> : null}
           </div>
-          <Tag className={`shrink-0 ${statusBadgeClass(p.status)}`}>{p.status.toUpperCase()}</Tag>
-        </div>
-        <div className="flex flex-1 flex-col items-center justify-center px-3 pb-3 pt-12">
-          <div
-            className="flex h-[5.5rem] w-[5.5rem] items-center justify-center rounded-2xl bg-white/95 shadow-[0_6px_20px_rgba(10,61,98,0.1)] ring-1 ring-[#0A3D62]/[0.1]"
-            aria-hidden
-            title={p.name}
+
+          <div className="pw-kc-subtitle">{subLine}</div>
+
+          <button
+            type="button"
+            className="pw-kc-title block w-full cursor-pointer border-0 bg-transparent p-0 text-left font-inherit hover:opacity-90"
+            onClick={onOpenFolder}
           >
-            <CardIcon className="h-[2.4rem] w-[2.4rem] text-[#0A3D62]" strokeWidth={1.35} aria-hidden />
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col border-t border-[#E2E0D9] bg-white p-4">
-        <div className="text-[15px] font-bold leading-snug text-[#1A1917]">{p.name}</div>
-        <div className="mt-1.5 text-[12px] leading-relaxed text-[#5C5A55]">{metaForTab(tab, p)}</div>
-        <div className="mt-1 text-[12px] text-[#9A9890]">{detailForTab(tab, p)}</div>
-        <div className="mt-2 text-[13px] font-semibold text-[#1A1917]">
-          {p.price}
-          {p.priceUnit ? <span className="font-semibold text-[#5C5A55]"> {p.priceUnit}</span> : null}
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#ECEAE4] pt-3">
-          <Button type="button" size="sm" className="rounded-lg bg-[#0A1628] text-white hover:bg-[#071E36]" onClick={onEdit}>
-            {t("common.edit")}
-          </Button>
-          <Button type="button" variant="secondary" size="sm" className="rounded-lg border-[#D4D0C8] bg-white" onClick={onView}>
-            {t("common.view")}
-          </Button>
-          {p.status === "Draft" ? (
-            <Button type="button" size="sm" className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" onClick={onPublish}>
-              {t("admin.pages.catalogueSegment.publish")}
-            </Button>
-          ) : p.status === "Published" ? (
-            <button
-              type="button"
-              className="ml-1 text-xs font-medium text-[#9A9890] underline-offset-2 hover:text-[#5C5A55] hover:underline"
-              onClick={onArchive}
-            >
-              {t("admin.pages.catalogueSegment.archive")}
-            </button>
+            {p.name}
+          </button>
+
+          <p className="pw-kc-body pw-kc-body--meta">
+            <span className="pw-kc-publisher">{metaParts.publisher}</span>
+            <span className="pw-kc-meta-sep"> · </span>
+            <span className="pw-kc-meta-rest">{metaParts.rest}</span>
+          </p>
+          {detailForTab(tab, p) ? (
+            <p className="mt-0.5 text-[11px] font-light leading-snug text-[#78909c]">{detailForTab(tab, p)}</p>
           ) : null}
+
+          <p className="pw-kc-price">
+            {p.lineItems.length > 0 ? (
+              <span>{p.folderPriceLabel}</span>
+            ) : (
+              <>
+                {p.price}
+                {p.priceUnit ? <span className="font-semibold text-[#5C5A55]"> {p.priceUnit}</span> : null}
+              </>
+            )}
+          </p>
+
+          {mode === "school" || mode === "wishlist" ? (
+            <div className="pw-kc-admin-actions flex flex-nowrap items-center gap-2">
+              <Button type="button" variant="secondary" size="sm" className="rounded-lg border-[#D4D0C8] bg-white" onClick={onOpenFolder}>
+                {t("common.view")}
+              </Button>
+              {mode === "wishlist" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  aria-label={t("mvpPages.wishlist.removeAria")}
+                  title={t("mvpPages.wishlist.removeAria")}
+                  className="min-w-0 rounded-lg border-[#D4D0C8] bg-white px-2.5 text-[#9A9890] hover:text-red-700"
+                  onClick={onRemoveFromWishlist}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  aria-label={t("mvpPages.catalogue.addWishlist")}
+                  title={t("mvpPages.catalogue.addWishlist")}
+                  className="min-w-0 rounded-lg border-[#D4D0C8] bg-white px-2.5"
+                  onClick={onAddToWishlist}
+                >
+                  <Heart className="h-4 w-4" aria-hidden />
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                className="whitespace-nowrap rounded-lg bg-[#0A1628] text-white hover:bg-[#071E36]"
+                onClick={onAddToRfq}
+              >
+                {t("mvpPages.catalogue.addRfq")}
+              </Button>
+            </div>
+          ) : (
+            <div className="pw-kc-admin-actions">
+              <Button type="button" variant="secondary" size="sm" className="rounded-lg border-[#D4D0C8] bg-white" onClick={onOpenFolder}>
+                {t("common.view")}
+              </Button>
+              <Button type="button" size="sm" className="rounded-lg bg-[#0A1628] text-white hover:bg-[#071E36]" onClick={onEdit}>
+                {t("common.edit")}
+              </Button>
+              {p.status === "Draft" ? (
+                <Button type="button" size="sm" className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" onClick={onPublish}>
+                  {t("admin.pages.catalogueSegment.publish")}
+                </Button>
+              ) : p.status === "Published" ? (
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1.5 text-xs font-medium text-[#9A9890] underline-offset-2 hover:text-[#5C5A55] hover:underline"
+                  onClick={onArchive}
+                >
+                  {t("admin.pages.catalogueSegment.archive")}
+                </button>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
+
+      <FolderCoverCollage product={p} />
     </div>
   );
 }

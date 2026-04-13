@@ -63,6 +63,15 @@ function mapSchool(s: {
   };
 }
 
+/** Clears client session without calling the API (used when refresh fails or token is invalid). */
+export function sessionExpired() {
+  setAccessToken(null);
+  useAuthStore.setState({ user: null, school: null, publisher: null });
+  if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+    window.location.assign("/login");
+  }
+}
+
 function apiErrorMessage(e: unknown, fallback: string) {
   if (axios.isAxiosError(e)) {
     const msg = (e.response?.data as { error?: { message?: string } })?.error?.message;

@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -40,7 +41,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { cn } from "../../../utils/cn";
-import { KnowledgeProductCard, knowledgeCardTheme } from "../../../school/KnowledgeProductCard";
+import { catalogueTextbooks, type CatalogueProductRow } from "../../../../data/admin/catalogue";
+import { CatalogueProductCard } from "../../../admin/components/catalogue/CatalogueProductCard";
 import type { School, User } from "../../../../types/domain";
 import {
   featuredNewTitles,
@@ -53,7 +55,6 @@ import {
   schoolDashboardChecklistSummary,
   schoolOverviewStats,
   schoolRecentActivity,
-  schoolRecentCatalogue,
   schoolRfqPipeline,
   schoolWishlistPreview,
   type SchoolAnnouncement,
@@ -400,7 +401,7 @@ function FeaturedTitleCard({
 }: {
   p: SchoolProductHighlight;
   country: string | undefined;
-  t: (k: string, o?: Record<string, string | number>) => string;
+  t: TFunction;
   accentIndex: number;
 }) {
   const badgeKey =
@@ -454,7 +455,7 @@ function FeaturedTitlesTabbedList({
   t,
 }: {
   country: string | undefined;
-  t: (k: string, o?: Record<string, string | number>) => string;
+  t: TFunction;
 }) {
   const [tabId, setTabId] = useState<FeaturedTitlesTabId>("all");
   const rows = useMemo(() => featuredTitlesForTab(tabId), [tabId]);
@@ -503,7 +504,7 @@ function ProductCarouselCard({
 }: {
   p: SchoolProductHighlight;
   country: string | undefined;
-  t: (k: string, o?: Record<string, string | number>) => string;
+  t: TFunction;
 }) {
   const badgeKey =
     p.badge === "newEd"
@@ -591,76 +592,53 @@ function ProductCarouselCard({
 
 function RecentCatalogueRowCard({
   p,
-  country,
   t,
-  visualIndex,
+  onOpenFolder,
+  onAddToWishlist,
+  onAddToRfq,
 }: {
-  p: SchoolProductHighlight;
-  country: string | undefined;
-  t: (k: string, o?: Record<string, string | number>) => string;
-  visualIndex: number;
+  p: CatalogueProductRow;
+  t: TFunction;
+  onOpenFolder: () => void;
+  onAddToWishlist: () => void;
+  onAddToRfq: () => void;
 }) {
-  const badgeKey =
-    p.badge === "newEd"
-      ? "app.schoolDashboard.badges.newEd"
-      : p.badge === "ourBrand"
-        ? "app.schoolDashboard.badges.ourBrand"
-        : p.badge === "newPartner"
-          ? "app.schoolDashboard.badges.newPartner"
-          : p.badge === "newArabic"
-            ? "app.schoolDashboard.badges.newArabic"
-            : p.badge === "ed2025"
-              ? "app.schoolDashboard.badges.ed2025"
-              : null;
-
-  const unitKey =
-    p.priceUnitKey === "perStudent"
-      ? "app.schoolDashboard.priceUnits.perStudent"
-      : p.priceUnitKey === "perLicence"
-        ? "app.schoolDashboard.priceUnits.perLicence"
-        : "app.schoolDashboard.priceUnits.perClassroom";
-
-  const recoMod = recoBadgeClass(p.badge);
-  const subLine = t(p.productSubKey).replace(/\s*·\s*/g, " • ");
-
   return (
-    <KnowledgeProductCard
-      to="/app/catalogue"
-      title={t(p.productTitleKey)}
-      eyebrow={t("app.schoolDashboard.recentCatalogueEyebrow")}
-      body={subLine}
-      priceLine={`${productPrice(p, country)}${t(unitKey)}`}
-      ctaLine={t("app.schoolDashboard.recentCatalogueCta")}
-      theme={knowledgeCardTheme(visualIndex)}
-      badge={badgeKey ? <span className={cn("pw-kc-badge", "pw-reco-badge", recoMod)}>{t(badgeKey)}</span> : undefined}
+    <CatalogueProductCard
+      tab="textbooks"
+      mode="school"
+      product={p}
+      t={t}
+      onOpenFolder={onOpenFolder}
+      onEdit={() => undefined}
+      onArchive={() => undefined}
+      onPublish={() => undefined}
+      onAddToWishlist={onAddToWishlist}
+      onAddToRfq={onAddToRfq}
     />
   );
 }
 
 export function SchoolPartnerDashboard({ user, school }: { user: User; school: School }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const recentCatalogueScrollRef = useRef<HTMLDivElement>(null);
   const marqueeHoverPauseRef = useRef(false);
+  const recentArrowLockRef = useRef(false);
+
+  const recentCatalogueItems = useMemo(() => catalogueTextbooks.filter((p) => p.status === "Published").slice(0, 5), []);
 
   const recentCatalogueLoop = useMemo(
     () =>
       Array.from({ length: RECENT_CATALOGUE_MARQUEE_COPIES }, (_, copy) =>
-        schoolRecentCatalogue.map((p) => ({ p, copy, key: `${p.id}__m${copy}` })),
+        recentCatalogueItems.map((p) => ({ p, copy, key: `${p.id}__m${copy}` })),
       ).flat(),
-    [schoolRecentCatalogue],
+    [recentCatalogueItems],
   );
-
-  const recentCatVisualIndexById = useMemo(() => {
-    const m: Record<string, number> = {};
-    schoolRecentCatalogue.forEach((p, i) => {
-      m[p.id] = i;
-    });
-    return m;
-  }, [schoolRecentCatalogue]);
 
   useEffect(() => {
     const el = recentCatalogueScrollRef.current;
-    if (!el || prefersReducedMotion() || schoolRecentCatalogue.length === 0) return;
+    if (!el || prefersReducedMotion() || recentCatalogueItems.length === 0) return;
 
     let rafId = 0;
     const copies = RECENT_CATALOGUE_MARQUEE_COPIES;
@@ -670,8 +648,10 @@ export function SchoolPartnerDashboard({ user, school }: { user: User; school: S
         const segment = el.scrollWidth / copies;
         if (segment > 1) {
           el.scrollLeft += RECENT_CATALOGUE_MARQUEE_SPEED;
-          while (el.scrollLeft >= segment - 0.5) {
-            el.scrollLeft -= segment;
+          if (el.scrollLeft >= segment || el.scrollLeft < 0) {
+            // Normalize in O(1) to avoid heavy loops on burst clicks.
+            const wrapped = el.scrollLeft % segment;
+            el.scrollLeft = wrapped < 0 ? wrapped + segment : wrapped;
           }
         }
       }
@@ -680,20 +660,28 @@ export function SchoolPartnerDashboard({ user, school }: { user: User; school: S
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [schoolRecentCatalogue.length, recentCatalogueLoop.length]);
+  }, [recentCatalogueItems.length, recentCatalogueLoop.length]);
 
   const scrollRecentCatalogue = (direction: -1 | 1) => {
     const el = recentCatalogueScrollRef.current;
-    if (!el) return;
+    if (!el || recentArrowLockRef.current) return;
+    recentArrowLockRef.current = true;
+    window.setTimeout(() => {
+      recentArrowLockRef.current = false;
+    }, 140);
     const slide = el.querySelector<HTMLElement>("[data-pw-recent-slide]");
     const gap = 22;
     const step = (slide?.offsetWidth ?? 360) + gap;
     const isRtl = getComputedStyle(el).direction === "rtl";
     const factor = isRtl ? -1 : 1;
+    marqueeHoverPauseRef.current = true;
     el.scrollBy({
       left: factor * direction * step,
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      behavior: "auto",
     });
+    window.setTimeout(() => {
+      marqueeHoverPauseRef.current = false;
+    }, 180);
   };
 
   const displayName = `${user.firstName}`.trim() || user.email;
@@ -837,9 +825,10 @@ export function SchoolPartnerDashboard({ user, school }: { user: User; school: S
                 <div key={key} role="listitem" data-pw-recent-slide>
                   <RecentCatalogueRowCard
                     p={p}
-                    country={school.country}
                     t={t}
-                    visualIndex={recentCatVisualIndexById[p.id] ?? 0}
+                    onOpenFolder={() => navigate(`/app/catalogue?folder=${encodeURIComponent(p.id)}`)}
+                    onAddToWishlist={() => navigate("/app/wishlist")}
+                    onAddToRfq={() => navigate("/app/rfq")}
                   />
                 </div>
               ))}
