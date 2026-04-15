@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AdminPageHeader } from "../../admin/components/AdminPageHeader";
-import { publisherDashboardKpis } from "../../../data/admin/publisherDashboard";
+import { publisherDashboardKpis } from "../../../data/admin-dashboard";
 
 export function AdminPublisherDashboardPage() {
   const { t } = useTranslation();

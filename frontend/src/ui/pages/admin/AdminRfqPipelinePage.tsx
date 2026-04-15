@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { LucideIcon } from "lucide-react";
-import { BadgeCheck, ClipboardList, Flag, Inbox, Plus, Search } from "lucide-react";
+import { BadgeCheck, Calendar, ClipboardList, Flag, Inbox, MoreHorizontal, Plus, Search } from "lucide-react";
 import { AdminPageHeader } from "../../admin/components/AdminPageHeader";
 import { Button } from "../../components/Button";
 import { RfqCreateModal } from "../../admin/components/rfq/RfqCreateModal";
@@ -28,27 +28,109 @@ const COL_ICON: Record<RfqKanbanColumnKey, LucideIcon> = {
   delivered: Flag,
 };
 
-const COL_HEADER_GRADIENT: Record<RfqKanbanColumnKey, string> = {
-  submitted: "from-[#6B8BFF] to-[#4F6AF6]",
-  quoted: "from-[#FFC14D] to-[#F5A524]",
-  approved: "from-[#57D9A3] to-[#36B37E]",
-  delivered: "from-[#6B778C] to-[#505F79]",
+/** Default pipeline % when card has no explicit progress (matches column stage). */
+const COLUMN_DEFAULT_PROGRESS: Record<RfqKanbanColumnKey, number> = {
+  submitted: 25,
+  quoted: 50,
+  approved: 75,
+  delivered: 100,
 };
+
+const COL_BAR: Record<RfqKanbanColumnKey, string> = {
+  submitted: "#2563eb",
+  quoted: "#ea580c",
+  approved: "#16a34a",
+  delivered: "#475569",
+};
+
+const COL_DOT: Record<RfqKanbanColumnKey, string> = {
+  submitted: "bg-[#2563eb]",
+  quoted: "bg-[#ea580c]",
+  approved: "bg-[#16a34a]",
+  delivered: "bg-[#475569]",
+};
+
+/** Section chrome: header gradient + tinted column well (matches Kanban column identity). */
+const COL_THEME: Record<
+  RfqKanbanColumnKey,
+  {
+    header: string;
+    iconWrap: string;
+    countBadge: string;
+    plusBtn: string;
+    columnWell: string;
+    emptyWell: string;
+    addCard: string;
+    barTrack: string;
+  }
+> = {
+  submitted: {
+    header: "bg-gradient-to-r from-[#3b82f6] via-[#2563eb] to-[#1d4ed8]",
+    iconWrap: "bg-white/20 text-white ring-1 ring-white/35 shadow-sm backdrop-blur-[2px]",
+    countBadge: "bg-white text-[#1d4ed8] ring-1 ring-white/90 shadow-sm",
+    plusBtn: "bg-white/20 text-white hover:bg-white/30",
+    columnWell: "bg-[#eff6ff]/95 border border-[#bfdbfe]/80",
+    emptyWell: "border-[#93c5fd]/60 bg-[#dbeafe]/50 text-[#1e40af]",
+    addCard: "border-[#93c5fd]/70 bg-[#eff6ff]/50 text-[#1d4ed8] hover:border-[#60a5fa] hover:bg-[#dbeafe]/60",
+    barTrack: "bg-blue-100/90",
+  },
+  quoted: {
+    header: "bg-gradient-to-r from-[#fb923c] via-[#f97316] to-[#ea580c]",
+    iconWrap: "bg-white/20 text-white ring-1 ring-white/35 shadow-sm backdrop-blur-[2px]",
+    countBadge: "bg-white text-[#c2410c] ring-1 ring-white/90 shadow-sm",
+    plusBtn: "bg-white/20 text-white hover:bg-white/30",
+    columnWell: "bg-[#fff7ed]/95 border border-[#fed7aa]/90",
+    emptyWell: "border-[#fdba74]/70 bg-[#ffedd5]/50 text-[#9a3412]",
+    addCard: "border-[#fdba74]/80 bg-[#fff7ed]/60 text-[#c2410c] hover:border-[#fb923c] hover:bg-[#ffedd5]/80",
+    barTrack: "bg-orange-100/90",
+  },
+  approved: {
+    header: "bg-gradient-to-r from-[#4ade80] via-[#22c55e] to-[#16a34a]",
+    iconWrap: "bg-white/20 text-white ring-1 ring-white/35 shadow-sm backdrop-blur-[2px]",
+    countBadge: "bg-white text-[#15803d] ring-1 ring-white/90 shadow-sm",
+    plusBtn: "bg-white/20 text-white hover:bg-white/30",
+    columnWell: "bg-[#f0fdf4]/95 border border-[#bbf7d0]/90",
+    emptyWell: "border-[#86efac]/70 bg-[#dcfce7]/50 text-[#166534]",
+    addCard: "border-[#86efac]/80 bg-[#f0fdf4]/60 text-[#15803d] hover:border-[#4ade80] hover:bg-[#dcfce7]/80",
+    barTrack: "bg-emerald-100/90",
+  },
+  delivered: {
+    header: "bg-gradient-to-r from-[#64748b] via-[#475569] to-[#334155]",
+    iconWrap: "bg-white/15 text-white ring-1 ring-white/30 shadow-sm backdrop-blur-[2px]",
+    countBadge: "bg-white text-[#334155] ring-1 ring-white/90 shadow-sm",
+    plusBtn: "bg-white/15 text-white hover:bg-white/25",
+    columnWell: "bg-[#f8fafc]/95 border border-[#cbd5e1]/90",
+    emptyWell: "border-[#94a3b8]/60 bg-[#f1f5f9]/70 text-[#334155]",
+    addCard: "border-[#94a3b8]/70 bg-[#f8fafc]/80 text-[#475569] hover:border-[#64748b] hover:bg-[#f1f5f9]",
+    barTrack: "bg-slate-200/90",
+  },
+};
+
+function amInitials(name: string): string {
+  const p = name.trim().split(/\s+/).filter(Boolean);
+  if (p.length >= 2) return `${p[0]!.charAt(0)}${p[p.length - 1]!.charAt(0)}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase() || "AM";
+}
+
+function cardProgressPct(card: RfqKanbanCard, colKey: RfqKanbanColumnKey): number {
+  const n = card.progress ?? COLUMN_DEFAULT_PROGRESS[colKey];
+  return Math.min(100, Math.max(0, n));
+}
 
 function cardPriorityPill(card: RfqKanbanCard, t: TFunction): { label: string; className: string } {
   if (card.pendingTone === "warn") {
-    return { label: t("admin.pages.rfq.cardPriUrgent"), className: "bg-[#FFEBE6] text-[#BF2600]" };
+    return { label: t("admin.pages.rfq.cardPriUrgent"), className: "bg-[var(--pw-alert-light)] text-[var(--pw-alert)]" };
   }
   if (card.showReviewCta) {
-    return { label: t("admin.pages.rfq.cardPriQuoteReview"), className: "bg-[#DEEBFF] text-[#0747A6]" };
+    return { label: t("admin.pages.rfq.cardPriQuoteReview"), className: "bg-[var(--pw-brand-light)] text-[var(--pw-brand)]" };
   }
   if (card.isNew) {
-    return { label: t("admin.pages.rfq.cardPriNew"), className: "bg-[#EAE6FF] text-[#403294]" };
+    return { label: t("admin.pages.rfq.cardPriNew"), className: "bg-[var(--pw-brand-light)] text-[var(--pw-brand-deep)]" };
   }
   if (card.fulfillment?.includes("Delivered")) {
-    return { label: t("admin.pages.rfq.cardPriFulfilled"), className: "bg-[#E3FCEF] text-[#006644]" };
+    return { label: t("admin.pages.rfq.cardPriFulfilled"), className: "bg-[var(--pw-success-light)] text-[var(--pw-success)]" };
   }
-  return { label: t("admin.pages.rfq.cardPriStandard"), className: "bg-[#F4F5F7] text-[#5E6C84]" };
+  return { label: t("admin.pages.rfq.cardPriStandard"), className: "bg-[var(--pw-muted)] text-[var(--pw-text-secondary)]" };
 }
 
 function territoryMatch(filter: string, card: RfqKanbanCard): boolean {
@@ -107,7 +189,7 @@ export function AdminRfqPipelinePage() {
   }, [stage, am, publisher, territory, search, sort]);
 
   const sel =
-    "h-10 min-w-0 flex-1 rounded-xl border border-[#DFE1E6] bg-[#FAFBFC] px-3 text-sm text-[#172B4D] shadow-sm outline-none transition hover:border-[#B3BAC5] focus:border-[#4F6AF6] focus:ring-2 focus:ring-[#4F6AF6]/20 sm:min-w-[148px]";
+    "h-10 min-w-0 flex-1 rounded-full border border-[var(--pw-border)] bg-[var(--pw-muted)]/80 px-3 text-sm text-[var(--pw-text)] shadow-sm outline-none transition hover:border-[var(--pw-text-muted)] focus:border-[var(--pw-logo-blue)] focus:ring-2 focus:ring-[var(--pw-logo-blue)]/20 sm:min-w-[148px]";
 
   return (
     <div className="font-sans">
@@ -124,7 +206,7 @@ export function AdminRfqPipelinePage() {
               type="button"
               variant="secondary"
               size="sm"
-              className="rounded-xl border-[#DFE1E6] shadow-sm"
+              className="rounded-full border-[var(--pw-border)] shadow-sm"
               onClick={() => show(t("admin.pages.rfq.toastExport"))}
             >
               {t("admin.pages.rfq.export")}
@@ -132,7 +214,7 @@ export function AdminRfqPipelinePage() {
             <Button
               type="button"
               size="sm"
-              className="rounded-xl bg-[#4F6AF6] text-white shadow-sm hover:bg-[#3D5AE8]"
+              className="rounded-full bg-[var(--pw-brand)] text-white shadow-sm hover:bg-[var(--pw-brand-deep)]"
               onClick={() => setCreateOpen(true)}
             >
               {t("admin.pages.rfq.createRfq")}
@@ -141,13 +223,17 @@ export function AdminRfqPipelinePage() {
         }
       />
 
-      <div className="mb-5 rounded-2xl border border-[#DFE1E6] bg-white p-4 shadow-[0_1px_3px_rgba(9,30,66,0.08)]">
+      <div className="mb-5 rounded-3xl border border-[var(--pw-border)] bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative min-h-10 min-w-0 flex-[2] lg:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#7A869A]" strokeWidth={2} aria-hidden />
+          <div className="relative min-h-10 min-w-0 flex-[2] lg:max-w-xl">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--pw-text-muted)]"
+              strokeWidth={2}
+              aria-hidden
+            />
             <input
               type="search"
-              className="h-10 w-full rounded-xl border border-[#DFE1E6] bg-[#FAFBFC] py-2 pl-10 pr-3 text-sm text-[#172B4D] outline-none transition placeholder:text-[#7A869A] focus:border-[#4F6AF6] focus:bg-white focus:ring-2 focus:ring-[#4F6AF6]/15"
+              className="h-11 w-full rounded-full border border-[var(--pw-border)] bg-[var(--pw-muted)]/60 py-2 pl-10 pr-4 text-sm text-[var(--pw-text)] outline-none transition placeholder:text-[var(--pw-text-muted)] focus:border-[var(--pw-logo-blue)] focus:bg-white focus:ring-2 focus:ring-[var(--pw-logo-blue)]/15"
               placeholder={t("admin.pages.rfq.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -186,12 +272,12 @@ export function AdminRfqPipelinePage() {
         </div>
       </div>
 
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[13px] text-[#5E6C84]">{t("admin.pages.rfq.kanbanBoardHint")}</p>
-        <label className="flex items-center gap-2 text-[13px] font-medium text-[#172B4D]">
-          <span className="text-[#5E6C84]">{t("admin.pages.rfq.sortBy")}</span>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13px] text-[var(--pw-text-secondary)]">{t("admin.pages.rfq.kanbanBoardHint")}</p>
+        <label className="flex items-center gap-2 text-[13px] font-medium text-[var(--pw-text)]">
+          <span className="text-[var(--pw-text-secondary)]">{t("admin.pages.rfq.sortBy")}</span>
           <select
-            className="h-9 rounded-xl border border-[#DFE1E6] bg-white px-3 text-sm font-medium text-[#172B4D] shadow-sm outline-none focus:border-[#4F6AF6] focus:ring-2 focus:ring-[#4F6AF6]/20"
+            className="h-9 rounded-full border border-[var(--pw-border)] bg-white px-3 text-sm font-medium text-[var(--pw-text)] shadow-sm outline-none focus:border-[var(--pw-logo-blue)] focus:ring-2 focus:ring-[var(--pw-logo-blue)]/20"
             value={sort}
             onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
           >
@@ -201,51 +287,79 @@ export function AdminRfqPipelinePage() {
         </label>
       </div>
 
-      <section className="rounded-2xl bg-[#EBECF0] p-3 sm:p-4" aria-label={t("admin.pages.rfq.boardAria")}>
+      <section
+        className="rounded-2xl bg-[#f1f5f9]/80 p-3 sm:p-4 ring-1 ring-[#e2e8f0]/80"
+        aria-label={t("admin.pages.rfq.boardAria")}
+      >
         <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] xl:grid xl:grid-cols-4 xl:gap-4 xl:overflow-visible xl:pb-0">
           {filteredColumns.map((col) => {
-            const Icon = COL_ICON[col.key];
+            const HeaderIcon = COL_ICON[col.key];
             const visibleCount = col.cards.length;
+            const theme = COL_THEME[col.key];
+
             return (
               <div
                 key={col.key}
-                className="flex w-[min(100vw-2rem,320px)] shrink-0 snap-start flex-col sm:w-[300px] xl:min-h-[min(640px,calc(100vh-300px))] xl:w-auto xl:min-w-0"
+                className="flex w-[min(100vw-2rem,340px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl shadow-[0_1px_3px_rgba(15,23,42,0.08)] sm:w-[320px] xl:min-h-[min(640px,calc(100vh-320px))] xl:w-auto xl:min-w-0"
               >
-                <div
-                  className={cn(
-                    "mb-3 flex items-center justify-between gap-2 rounded-2xl bg-gradient-to-r px-4 py-3.5 text-white shadow-[0_2px_6px_rgba(9,30,66,0.12)]",
-                    COL_HEADER_GRADIENT[col.key],
-                  )}
-                >
+                <div className={cn("flex items-center justify-between gap-2 px-3.5 py-3.5 sm:px-4", theme.header)}>
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                      <Icon className="size-[18px] text-white" strokeWidth={2} aria-hidden />
+                    <span
+                      className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", theme.iconWrap)}
+                    >
+                      <HeaderIcon className="size-[18px]" strokeWidth={2} aria-hidden />
                     </span>
-                    <h2 className="truncate text-[15px] font-bold tracking-tight">{t(`admin.pages.rfq.kanban.${col.key}`)}</h2>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-[15px] font-bold tracking-tight text-white drop-shadow-sm">
+                        {t(`admin.pages.rfq.kanban.${col.key}`)}
+                      </h2>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold tabular-nums text-[#172B4D] shadow-sm">
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span
+                      className={cn(
+                        "flex h-8 min-w-[2rem] items-center justify-center rounded-full px-2 text-[12px] font-bold tabular-nums",
+                        theme.countBadge,
+                      )}
+                    >
                       {visibleCount}
                     </span>
                     <button
                       type="button"
-                      className="flex size-9 items-center justify-center rounded-xl bg-white/20 text-white transition hover:bg-white/30"
+                      className={cn(
+                        "flex size-9 items-center justify-center rounded-full transition",
+                        theme.plusBtn,
+                      )}
                       aria-label={t("admin.pages.rfq.kanbanAddRfq")}
                       onClick={() => setCreateOpen(true)}
                     >
-                      <Plus className="size-5" strokeWidth={2.5} aria-hidden />
+                      <Plus className="size-5" strokeWidth={2.25} aria-hidden />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex min-h-[min(400px,48vh)] flex-1 flex-col gap-3 rounded-2xl bg-[#DFE1E6]/60 p-2.5 xl:min-h-0">
+                <div
+                  className={cn(
+                    "flex min-h-[min(420px,50vh)] flex-1 flex-col gap-2 rounded-b-2xl p-2.5 xl:min-h-0",
+                    theme.columnWell,
+                  )}
+                >
                   {col.cards.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#B3BAC5] bg-white/70 px-4 py-12 text-center text-[13px] leading-relaxed text-[#5E6C84]">
+                    <div
+                      className={cn(
+                        "flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed px-4 py-14 text-center text-[13px] leading-relaxed",
+                        theme.emptyWell,
+                      )}
+                    >
                       {t("admin.pages.rfq.emptyColumn")}
                     </div>
                   ) : (
                     col.cards.map((card) => {
                       const pri = cardPriorityPill(card, t);
+                      const progress = cardProgressPct(card, col.key);
+                      const barColor = COL_BAR[col.key];
+                      const dotClass = COL_DOT[col.key];
+
                       return (
                         <div
                           key={card.rfqId}
@@ -259,32 +373,81 @@ export function AdminRfqPipelinePage() {
                             }
                           }}
                           className={cn(
-                            "w-full cursor-pointer rounded-2xl border border-[#DFE1E6] bg-white p-4 text-left shadow-[0_1px_2px_rgba(9,30,66,0.08)] transition hover:border-[#B3BAC5] hover:shadow-[0_4px_14px_rgba(9,30,66,0.12)]",
-                            card.successBorder && "ring-2 ring-[#36B37E]/35",
+                            "group w-full cursor-pointer rounded-xl border border-[var(--pw-border)] bg-white px-3 py-2.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-[var(--pw-text-muted)] hover:shadow-[0_6px_18px_rgba(15,23,42,0.07)]",
+                            card.successBorder && "ring-2 ring-[var(--pw-success)]/25",
                           )}
                         >
-                          <div className="mb-2.5 flex items-start justify-between gap-2">
-                            <span className={cn("rounded-lg px-2 py-0.5 text-[11px] font-semibold", pri.className)}>{pri.label}</span>
+                          <div className="flex gap-2">
+                            <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", dotClass)} aria-hidden />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <h3 className="text-[14px] font-semibold leading-tight tracking-tight text-[var(--pw-text)]">{card.title}</h3>
+                                <button
+                                  type="button"
+                                  className="-me-1 -mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[var(--pw-text-muted)] opacity-80 transition hover:bg-[var(--pw-muted)] hover:text-[var(--pw-text)] group-hover:opacity-100"
+                                  aria-label={t("admin.pages.rfq.cardMenuAria")}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewCard(card);
+                                  }}
+                                >
+                                  <MoreHorizontal className="size-4" strokeWidth={2} />
+                                </button>
+                              </div>
+                              <div className="mt-1 flex flex-wrap items-center gap-1">
+                                <span className={cn("rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide", pri.className)}>
+                                  {pri.label}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[12px] font-medium leading-snug text-[var(--pw-text-secondary)]">
+                                {card.publisher} · {card.territory === "KSA" ? "Saudi Arabia" : "UAE"}
+                              </p>
+                              <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[var(--pw-text-muted)]">
+                                {card.meta1}
+                                <span className="text-[var(--pw-border)]"> · </span>
+                                {card.meta2}
+                              </p>
+                            </div>
                           </div>
-                          <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-[#172B4D]">{card.title}</h3>
-                          <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-[#5E6C84]">
-                            {card.meta1}
-                            <span className="text-[#97A0AF]"> · </span>
-                            {card.meta2}
-                          </p>
+
+                          <div className="mt-2.5">
+                            <div className="mb-1 flex items-center justify-between text-[10px] font-medium text-[var(--pw-text-secondary)]">
+                              <span>{t("admin.pages.rfq.kanbanProgress")}</span>
+                              <span className="tabular-nums text-[var(--pw-text)]">{progress}%</span>
+                            </div>
+                            <div className={cn("h-1.5 overflow-hidden rounded-full", theme.barTrack)}>
+                              <div
+                                className="h-full rounded-full transition-[width]"
+                                style={{ width: `${progress}%`, backgroundColor: barColor }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 flex items-center justify-between border-t border-[var(--pw-border)]/70 pt-2">
+                            <div className="flex items-center gap-1 text-[11px] text-[var(--pw-text-secondary)]">
+                              <Calendar className="size-3 shrink-0 text-[var(--pw-text-muted)]" strokeWidth={2} aria-hidden />
+                              <span>{card.footerDate ?? "—"}</span>
+                            </div>
+                            <div className="flex -space-x-2" title={card.accountManager}>
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[var(--pw-brand)] text-[9px] font-bold text-white shadow-sm">
+                                {amInitials(card.accountManager)}
+                              </span>
+                            </div>
+                          </div>
+
                           {card.pendingBadge ? (
-                            <p className="mt-2 text-[12px] font-medium text-[#BF2600]">{card.pendingBadge}</p>
+                            <p className="mt-2 text-[11px] font-medium leading-tight text-[var(--pw-alert)]">{card.pendingBadge}</p>
                           ) : null}
                           {card.fulfillment ? (
-                            <p className="mt-1 text-[12px] font-medium text-[#006644]">{card.fulfillment}</p>
+                            <p className="mt-1 text-[11px] font-medium leading-tight text-[var(--pw-success)]">{card.fulfillment}</p>
                           ) : null}
 
                           {card.showReviewCta ? (
-                            <div className="mt-4">
+                            <div className="mt-2.5">
                               <Button
                                 type="button"
                                 size="sm"
-                                className="h-9 w-full rounded-xl bg-[#4F6AF6] text-xs font-semibold text-white shadow-sm hover:bg-[#3D5AE8]"
+                                className="h-8 w-full rounded-lg bg-[#1d4ed8] text-[11px] font-semibold text-white shadow-sm hover:bg-[#1e40af]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setViewCard(card);
@@ -298,6 +461,18 @@ export function AdminRfqPipelinePage() {
                       );
                     })
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => setCreateOpen(true)}
+                    className={cn(
+                      "flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed py-4 text-[12px] font-semibold transition",
+                      theme.addCard,
+                    )}
+                  >
+                    <Plus className="size-4 opacity-80" strokeWidth={2.25} />
+                    {t("admin.pages.rfq.addRfqCard")}
+                  </button>
                 </div>
               </div>
             );

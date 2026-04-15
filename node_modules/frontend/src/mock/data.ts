@@ -22,6 +22,14 @@ function pad(n: number, len = 5) {
   return String(n).padStart(len, "0");
 }
 
+export type MockProductLineItem = {
+  id: string;
+  title: string;
+  gradeLabel: string;
+  isbn?: string;
+  price: number;
+};
+
 export type MockProduct = {
   id: string;
   sku: string;
@@ -36,6 +44,13 @@ export type MockProduct = {
   countryRelevance: CountryCode[];
   nccApproved: boolean;
   price: number;
+  /** Series / folder: per-grade SKUs (demo) */
+  lineItems?: MockProductLineItem[];
+  folderAccess?: {
+    passwordProtected: boolean;
+    /** School licence expired — show request access (demo) */
+    accessExpired?: boolean;
+  };
 };
 
 export type MockRfq = {
@@ -88,7 +103,7 @@ const formats = ["Print", "Digital", "Print+Digital", "Physical"];
 const editionsUAE = ["UAE Edition 2025", "GCC Edition 2024"];
 const editionsKSA = ["KSA Edition 2025", "NCC Edition 2024"];
 
-export const mockProducts: MockProduct[] = Array.from({ length: 145 }).map((_, i) => {
+const generatedMockProducts: MockProduct[] = Array.from({ length: 145 }).map((_, i) => {
   const type = pick(r, ["TEXTBOOK", "TEXTBOOK", "TEXTBOOK", "LIBRARY", "KIT", "RESOURCE", "UNIFORM"] as const);
   const pub = pick(r, publishers);
   const gradeMin = int(r, 1, 10);
@@ -120,6 +135,38 @@ export const mockProducts: MockProduct[] = Array.from({ length: 145 }).map((_, i
     price: int(r, 35, type === "KIT" ? 950 : 180) + Math.round(r() * 99) / 100,
   };
 });
+
+/** Demo: folder with per-item pricing — open from school catalogue via direct link */
+const demoFolderProducts: MockProduct[] = [
+  {
+    id: "p_inspire_series",
+    sku: "PW-TB-INSPIRE-FOLDER",
+    name: "Inspire Science G1–G8",
+    type: "TEXTBOOK",
+    publisher: "McGraw Hill",
+    grades: "G1–G8",
+    subject: "Science",
+    curriculum: "American",
+    format: "Blended",
+    edition: "2025 UAE Edition",
+    countryRelevance: ["UAE", "KSA"],
+    nccApproved: true,
+    price: 89,
+    lineItems: Array.from({ length: 8 }, (_, i) => ({
+      id: `p_inspire_series_g${i + 1}`,
+      title: `Inspire Science — Grade ${i + 1} (Student)`,
+      gradeLabel: `G${i + 1}`,
+      isbn: `978-1-265-${String(12000 + i).padStart(5, "0")}-X`,
+      price: 85 + i * 2,
+    })),
+    folderAccess: {
+      passwordProtected: true,
+      accessExpired: true,
+    },
+  },
+];
+
+export const mockProducts: MockProduct[] = [...generatedMockProducts, ...demoFolderProducts];
 
 export function makeMockRfqs(country: CountryCode) {
   const vatRate = country === "KSA" ? 0.15 : 0.05;

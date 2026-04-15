@@ -40,10 +40,10 @@ import {
   Sparkles,
   User as UserIcon,
 } from "lucide-react";
-import { cn } from "../../../utils/cn";
-import { catalogueTextbooks, type CatalogueProductRow } from "../../../../data/admin/catalogue";
-import { CatalogueProductCard } from "../../../admin/components/catalogue/CatalogueProductCard";
-import type { School, User } from "../../../../types/domain";
+import { cn } from "../../utils/cn";
+import { catalogueTextbooks, type CatalogueProductRow } from "../../../data/admin/catalogue";
+import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
+import type { School, User } from "../../../types/domain";
 import {
   featuredNewTitles,
   featuredTitlesListTabs,
@@ -61,7 +61,7 @@ import {
   type FeaturedTitlesTabId,
   type SchoolChecklistAccordionSection,
   type SchoolProductHighlight,
-} from "../../../../data/school/dashboard";
+} from "../../../data/school-dashboard";
 
 /** Duplicated slides for seamless infinite horizontal scroll */
 const RECENT_CATALOGUE_MARQUEE_COPIES = 3;

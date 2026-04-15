@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../../store/auth.store";
-import { RoleDashboard } from "./dashboards/RoleDashboards";
-import { SchoolPartnerDashboard } from "./dashboards/SchoolPartnerDashboard";
+import { RoleDashboard, SchoolPartnerDashboard } from "../school-dashboard";
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user)!;
@@ -18,9 +17,8 @@ export function DashboardPage() {
   return (
     <RoleDashboard
       role={user.role}
-      contextLabel={school ? `${school.name} • ${school.country} • ${school.curriculumType}` : t("app.name")}
+      contextLabel={school ? `${school.name} ${school.country} ${school.curriculumType}` : t("app.name")}
       country={school?.country ?? null}
     />
   );
 }
-

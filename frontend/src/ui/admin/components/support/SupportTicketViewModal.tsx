@@ -4,9 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { AdminModal } from "../AdminModal";
 import { Button } from "../../../components/Button";
 import type { SupportTicketRow } from "../../../../data/admin/supportTickets";
-
-const lbl = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#5C5A55]";
-const inp = "w-full rounded-lg border border-[#E2E0D9] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3D62]";
+import { inp, lbl } from "../formStyles";
 
 const ASSIGNEES = ["Zara Al-Ahmad", "Tech Support Team", "McGraw Hill Support (escalate)"] as const;
 

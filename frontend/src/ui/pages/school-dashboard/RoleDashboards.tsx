@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card } from "../../../components/Card";
-import { Button } from "../../../components/Button";
-import { mockProducts, makeMockInvoices, makeMockRfqs, mockTickets } from "../../../../mock/data";
-import type { UserRole } from "../../../../types/domain";
+import { Card } from "../../components/Card";
+import { Button } from "../../components/Button";
+import { mockProducts, makeMockInvoices, makeMockRfqs, mockTickets } from "../../../mock/data";
+import type { UserRole } from "../../../types/domain";
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (

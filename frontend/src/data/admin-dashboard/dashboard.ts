@@ -1,4 +1,4 @@
-import { accountManagers } from "./accountManagers";
+import { accountManagers } from "../admin/accountManagers";
 
 /** Catalogue counts shown on admin dashboard overview */
 export const catalogueCounts = {

@@ -14,8 +14,7 @@ type Props = {
   onToast: (msg: string) => void;
 };
 
-const inp = "w-full rounded-lg border border-[#E2E0D9] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3D62]";
-const lbl = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#5C5A55]";
+import { inp, lbl } from "../formStyles";
 
 export function RfqViewModal({ open, onClose, card, t, onToast }: Props) {
   const [waReply, setWaReply] = useState(true);

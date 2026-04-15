@@ -1,6 +1,6 @@
 import { useAuthStore } from "../../../store/auth.store";
 import { DashboardPage } from "./DashboardPage";
-import { SalesDashboardPage } from "../sales/SalesDashboardPage";
+import { SalesDashboardPage } from "../sales-dashboard";
 
 /** `/app` home — sales AM dashboard vs school portal dashboard. */
 export function PortalIndexPage() {

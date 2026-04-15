@@ -2,10 +2,9 @@ import { useTranslation } from "react-i18next";
 import { AdminModal } from "../AdminModal";
 import { Button } from "../../../components/Button";
 import { rfqCreateProductOptions, rfqCreateSchoolOptions } from "../../../../data/admin/rfqPipeline";
+import { inp, lbl, sec } from "../formStyles";
 
-const inp = "w-full rounded-lg border border-[#E2E0D9] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3D62]";
-const lbl = "mb-1 block text-xs font-medium text-[#5C5A55]";
-const section = "mt-4 border-t border-[#ECEAE4] pt-4 text-xs font-bold uppercase tracking-wide text-[#5C5A55]";
+const section = sec;
 
 type Props = {
   open: boolean;

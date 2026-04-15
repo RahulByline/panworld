@@ -2,9 +2,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { catalogueHaystack, catalogueTextbooks, getCatalogueFolder, type CatalogueProductRow } from "../../../data/admin/catalogue";
+import {
+  catalogueHaystack,
+  catalogueTextbooks,
+  getCatalogueFolder,
+  type CatalogueLineItem,
+  type CatalogueProductRow,
+} from "../../../data/admin/catalogue";
 import { TB_CURRICULUM_OPTIONS, TB_FORMAT_OPTIONS, TB_GRADE_OPTIONS, TB_PUBLISHER_OPTIONS } from "../../../data/admin/catalogueFilterConfig";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
+import { CatalogueEbookPreviewModal } from "../../admin/components/catalogue/CatalogueEbookPreviewModal";
 import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
 import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
 import { PwPageHeader } from "../../panworld/PwPageHeader";
@@ -33,6 +40,7 @@ export function CataloguePage() {
   const [tbCurr, setTbCurr] = useState<string>(TB_CURRICULUM_OPTIONS[0]);
   const [tbFmt, setTbFmt] = useState<string>(TB_FORMAT_OPTIONS[0]);
   const [visible, setVisible] = useState(9);
+  const [ebookPreviewItem, setEbookPreviewItem] = useState<CatalogueLineItem | null>(null);
   const prevPathRef = useRef<string | null>(null);
 
   const products = useMemo(() => catalogueTextbooks.filter((p) => p.status === "Published"), []);
@@ -111,9 +119,18 @@ export function CataloguePage() {
           onBack={closeFolder}
           onAddBook={() => undefined}
           onEditFolder={() => undefined}
-          onViewItem={() => show(t("mvpPages.catalogue.backToCatalogue"))}
+          onViewItem={(itemId) => {
+            const item = folderProduct.lineItems.find((li) => li.id === itemId);
+            if (item) setEbookPreviewItem(item);
+          }}
           onAddToWishlist={() => show(t("mvpPages.catalogue.addWishlist"))}
           onAddToRfq={() => show(t("mvpPages.catalogue.addRfq"))}
+        />
+        <CatalogueEbookPreviewModal
+          open={ebookPreviewItem !== null}
+          onClose={() => setEbookPreviewItem(null)}
+          lineItem={ebookPreviewItem}
+          folderName={folderProduct.name}
         />
       </div>
     );

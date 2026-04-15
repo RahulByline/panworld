@@ -9,6 +9,10 @@ export type RfqKanbanCard = {
   accountManager: string;
   publisher: string;
   territory: "UAE" | "KSA";
+  /** 0–100; shown as pipeline progress bar. Falls back to column default if omitted. */
+  progress?: number;
+  /** Shown in card footer next to calendar icon */
+  footerDate?: string;
   isNew?: boolean;
   pendingBadge?: string;
   pendingTone?: "warn" | "muted";
@@ -71,6 +75,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Rania Khalil",
         publisher: "McGraw Hill",
         territory: "UAE",
+        progress: 28,
+        footerDate: "11 Apr 2026",
         isNew: true,
         showReviewCta: true,
       },
@@ -82,6 +88,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Rania Khalil",
         publisher: "StudySync",
         territory: "UAE",
+        progress: 22,
+        footerDate: "10 Apr 2026",
         showReviewCta: true,
       },
       {
@@ -92,6 +100,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Ahmed Al-Rashidi",
         publisher: "Kodeit",
         territory: "KSA",
+        progress: 35,
+        footerDate: "9 Apr 2026",
         showReviewCta: true,
       },
     ],
@@ -109,6 +119,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Rania Khalil",
         publisher: "McGraw Hill",
         territory: "UAE",
+        progress: 52,
+        footerDate: "5 Apr 2026",
         pendingBadge: "6 days pending",
         pendingTone: "warn",
       },
@@ -120,6 +132,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Sara Nasser",
         publisher: "Jolly Phonics",
         territory: "UAE",
+        progress: 48,
+        footerDate: "6 Apr 2026",
         pendingBadge: "5 days pending",
         pendingTone: "muted",
       },
@@ -138,6 +152,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Rania Khalil",
         publisher: "McGraw Hill",
         territory: "UAE",
+        progress: 78,
+        footerDate: "2 Apr 2026",
         fulfillment: "In Warehouse",
         fulfillmentTone: "success",
         successBorder: true,
@@ -150,6 +166,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Sara Nasser",
         publisher: "Cambridge",
         territory: "UAE",
+        progress: 82,
+        footerDate: "28 Mar 2026",
         fulfillment: "Dispatched",
         fulfillmentTone: "brand",
         successBorder: true,
@@ -169,6 +187,8 @@ export const rfqKanbanColumns: RfqKanbanColumn[] = [
         accountManager: "Rania Khalil",
         publisher: "McGraw Hill",
         territory: "UAE",
+        progress: 100,
+        footerDate: "5 Apr 2026",
         fulfillment: "Delivered ✓",
         fulfillmentTone: "success",
       },

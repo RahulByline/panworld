@@ -7,6 +7,7 @@ import {
   catalogueByTab,
   catalogueHaystack,
   getCatalogueFolder,
+  type CatalogueLineItem,
   type CatalogueProductRow,
   type CatalogueTab,
 } from "../../../data/admin/catalogue";
@@ -26,8 +27,9 @@ import {
 } from "../../../data/admin/catalogueFilterConfig";
 import { cn } from "../../utils/cn";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
-import { KitCatalogueModal, LibraryCatalogueModal, TextbookCatalogueModal } from "../../admin/components/catalogue/CatalogueModals";
+import { KitCatalogueModal, LibraryCatalogueModal, TextbookProductModal } from "../../admin/components/catalogue/CatalogueModals";
 import { CatalogueBookItemModal } from "../../admin/components/catalogue/CatalogueBookItemModal";
+import { CatalogueEbookPreviewModal } from "../../admin/components/catalogue/CatalogueEbookPreviewModal";
 import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
 import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
 
@@ -102,7 +104,35 @@ export function AdminCatalogueSegmentPage() {
     };
   }, [t, tab]);
 
-  const products = catalogueByTab[tab ?? "textbooks"];
+  const [extraProducts, setExtraProducts] = useState<Record<CatalogueTab, CatalogueProductRow[]>>({
+    textbooks: [],
+    library: [],
+    kits: [],
+  });
+
+  const products = [...catalogueByTab[tab ?? "textbooks"], ...(extraProducts[tab ?? "textbooks"] ?? [])];
+
+  function handleAddCatalogue(row: CatalogueProductRow) {
+    const activeTab = tab ?? "textbooks";
+    setExtraProducts((prev) => ({ ...prev, [activeTab]: [row, ...prev[activeTab]] }));
+  }
+
+  function handleAddLineItem(item: CatalogueLineItem) {
+    const currentFolderId = new URLSearchParams(window.location.search).get("folder");
+    if (!tab || !currentFolderId) return;
+    setExtraProducts((prev) => {
+      const list = prev[tab].map((p) => {
+        if (p.id !== currentFolderId) return p;
+        const updated = [...p.lineItems, item];
+        return {
+          ...p,
+          lineItems: updated,
+          folderPriceLabel: `${updated.length} title${updated.length === 1 ? "" : "s"} · From ${item.price}`,
+        };
+      });
+      return { ...prev, [tab]: list };
+    });
+  }
 
   const filtered = useMemo(() => {
     if (!tab) return [];
@@ -153,9 +183,14 @@ export function AdminCatalogueSegmentPage() {
   ]);
 
   const [bookModalOpen, setBookModalOpen] = useState(false);
+  const [addBookTypeOpen, setAddBookTypeOpen] = useState(false);
+  const [addBookType, setAddBookType] = useState<"textbook" | "library" | null>(null);
+  const [ebookPreviewItem, setEbookPreviewItem] = useState<CatalogueLineItem | null>(null);
 
   const folderId = searchParams.get("folder");
-  const folderProduct = tab && folderId ? getCatalogueFolder(tab, folderId) : undefined;
+  const folderProduct = tab && folderId
+    ? (getCatalogueFolder(tab, folderId) ?? extraProducts[tab]?.find((p) => p.id === folderId))
+    : undefined;
 
   const prevPathRef = useRef<string | null>(null);
   useEffect(() => {
@@ -170,14 +205,14 @@ export function AdminCatalogueSegmentPage() {
   }, [pathname, setSearchParams]);
 
   useEffect(() => {
-    if (folderId && tab && !getCatalogueFolder(tab, folderId)) {
+    if (folderId && tab && !getCatalogueFolder(tab, folderId) && !extraProducts[tab]?.find((p) => p.id === folderId)) {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.delete("folder");
         return next;
       });
     }
-  }, [folderId, tab, setSearchParams]);
+  }, [folderId, tab, extraProducts, setSearchParams]);
 
   const openFolder = (id: string) => {
     setSearchParams((prev) => {
@@ -206,13 +241,69 @@ export function AdminCatalogueSegmentPage() {
           product={folderProduct}
           t={t}
           onBack={closeFolder}
-          onAddBook={() => setBookModalOpen(true)}
+          onAddBook={() => setAddBookTypeOpen(true)}
           onEditFolder={() => setEditOpen(true)}
-          onViewItem={() => show(t("admin.pages.catalogueFolder.viewItemMock"))}
+          onViewItem={(itemId) => {
+            const item = folderProduct.lineItems.find((li) => li.id === itemId);
+            if (item) setEbookPreviewItem(item);
+          }}
         />
-        <CatalogueBookItemModal open={bookModalOpen} onClose={() => setBookModalOpen(false)} onSaved={show} mode="add" />
+        <CatalogueEbookPreviewModal
+          open={ebookPreviewItem !== null}
+          onClose={() => setEbookPreviewItem(null)}
+          lineItem={ebookPreviewItem}
+          folderName={folderProduct.name}
+        />
+        <CatalogueBookItemModal open={bookModalOpen} onClose={() => setBookModalOpen(false)} onSaved={show} mode="add" onAdd={handleAddLineItem} />
+
+        {/* Book type picker */}
+        {addBookTypeOpen ? (
+          <div
+            className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+            onMouseDown={(e) => e.target === e.currentTarget && setAddBookTypeOpen(false)}
+          >
+            <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/[0.06]">
+              <h2 className="text-[17px] font-bold text-[#1A1917]">Add to catalogue</h2>
+              <p className="mt-1 text-[13px] text-[#5C5A55]">What type of item would you like to add?</p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setAddBookTypeOpen(false); setAddBookType("textbook"); setBookModalOpen(true); }}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[#E2E0D9] bg-[#FAFAF8] px-4 py-5 text-center transition hover:border-[#0A3D62] hover:bg-[#F0F4F8]"
+                >
+                  <span className="text-2xl">📚</span>
+                  <span className="text-[13px] font-semibold text-[#1A1917]">Textbook</span>
+                  <span className="text-[11px] text-[#9A9890]">Grade-level student book or digital licence</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddBookTypeOpen(false); setAddBookType("library"); setBookModalOpen(true); }}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[#E2E0D9] bg-[#FAFAF8] px-4 py-5 text-center transition hover:border-[#0A3D62] hover:bg-[#F0F4F8]"
+                >
+                  <span className="text-2xl">📖</span>
+                  <span className="text-[13px] font-semibold text-[#1A1917]">Library book</span>
+                  <span className="text-[11px] text-[#9A9890]">Reading stage, levelled or supplementary title</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddBookTypeOpen(false)}
+                className="mt-4 w-full rounded-xl border border-[#E2E0D9] py-2 text-sm text-[#5C5A55] hover:bg-[#F5F4F0]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Textbook or library book add modal based on chosen type */}
+        {addBookType === "textbook" ? (
+          <TextbookProductModal open={bookModalOpen} onClose={() => { setBookModalOpen(false); setAddBookType(null); }} onSaved={show} mode="add" />
+        ) : addBookType === "library" ? (
+          <LibraryCatalogueModal open={bookModalOpen} onClose={() => { setBookModalOpen(false); setAddBookType(null); }} onSaved={show} mode="add" />
+        ) : null}
         {tab === "textbooks" ? (
-          <TextbookCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
+          <TextbookProductModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
         ) : tab === "library" ? (
           <LibraryCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
         ) : (
@@ -478,8 +569,8 @@ export function AdminCatalogueSegmentPage() {
 
       {tab === "textbooks" ? (
         <>
-          <TextbookCatalogueModal open={addOpen} onClose={() => setAddOpen(false)} onSaved={show} mode="add" />
-          <TextbookCatalogueModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
+          <TextbookProductModal open={addOpen} onClose={() => setAddOpen(false)} onSaved={show} mode="add" onAdd={handleAddCatalogue} />
+          <TextbookProductModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
         </>
       ) : tab === "library" ? (
         <>
