@@ -93,7 +93,7 @@ export function AdminCmsResourcesPage() {
           {t("admin.pages.resources.noResults")}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {filtered.map((row) => (
             <ResourceLibraryCard
               key={row.id}

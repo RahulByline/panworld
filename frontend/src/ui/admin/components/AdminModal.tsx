@@ -27,7 +27,7 @@ export function AdminModal({ open, onClose, title, children, footer, wide, extra
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-modal-title"
@@ -37,28 +37,41 @@ export function AdminModal({ open, onClose, title, children, footer, wide, extra
     >
       <div
         className={cn(
-          "flex max-h-[min(90vh,880px)] w-full flex-col overflow-hidden rounded-2xl border border-[#E2E0D9] bg-white shadow-xl",
+          "flex max-h-[min(90vh,880px)] w-full flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/[0.06]",
           extraWide && "max-w-5xl",
           wide && !extraWide && "max-w-3xl",
           !wide && !extraWide && "max-w-lg",
         )}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E0D9] px-5 py-4">
-          <h2 id="admin-modal-title" className="text-[15px] font-semibold text-[#0A3D62]">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between px-6 py-5">
+          <h2 id="admin-modal-title" className="text-[17px] font-bold text-[#1A1917]">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[#5C5A55] hover:bg-[#F5F4F0]"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F0] text-[#5C5A55] transition hover:bg-[#ECEAE4]"
             aria-label="Close"
           >
             ✕
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer ? <div className="shrink-0 border-t border-[#E2E0D9] px-5 py-3">{footer}</div> : null}
+
+        {/* Divider */}
+        <div className="h-px shrink-0 bg-[#F0EEE9]" />
+
+        {/* Body */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+
+        {/* Footer */}
+        {footer ? (
+          <>
+            <div className="h-px shrink-0 bg-[#F0EEE9]" />
+            <div className="shrink-0 bg-[#FAFAF8] px-6 py-4">{footer}</div>
+          </>
+        ) : null}
       </div>
     </div>,
     document.body,

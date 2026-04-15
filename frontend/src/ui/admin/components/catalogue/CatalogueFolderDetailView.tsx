@@ -282,66 +282,69 @@ export function CatalogueFolderDetailView({
           <p className="mt-0.5 text-[11px] text-[#5C5A55]">{t("admin.pages.catalogueFolder.itemsCardsHint")}</p>
         </div>
         <div className="p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {p.lineItems.map((row) => (
               <article
                 key={row.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E0D9] bg-white shadow-sm"
+                onClick={() => onViewItem(row.id)}
+                className="relative h-96 cursor-pointer overflow-hidden rounded-2xl border border-[#E2E0D9] shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-md"
               >
-                <div className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-[#F5F4F0]">
+                {/* Full-height cover image */}
+                <div className="absolute inset-0 bg-[#F5F4F0]">
                   <LineItemCover itemId={row.id} src={row.coverImageUrl} title={row.title} />
                 </div>
-                <div className="flex flex-1 flex-col p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-[#0A3D62]">{row.gradeLabel}</div>
-                  <h3 className="mt-1 line-clamp-3 min-h-[3.25rem] text-[13px] font-bold leading-snug text-[#1A1917]">
+
+                {/* Permanent gradient overlay at bottom */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628]/90 via-[#0A1628]/30 to-transparent" />
+
+                {/* Status badge top-right (admin only) */}
+                {mode === "admin" ? (
+                  <span className={cn("absolute right-2 top-2 z-10 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase shadow-sm", statusClass(row.status))}>
+                    {row.status}
+                  </span>
+                ) : null}
+
+                {/* Static info at bottom */}
+                <div className="absolute inset-x-0 bottom-0 z-10 p-3">
+                  <h3 className="line-clamp-2 text-[13px] font-extrabold leading-snug text-white">
                     {row.title}
                   </h3>
-                  <div className="mt-2 font-mono text-[11px] leading-tight text-[#5C5A55]">{row.isbn ?? "—"}</div>
-                  <div className="mt-1.5 text-[13px] font-semibold text-[#1A1917]">
-                    {row.price}
-                    {row.priceUnit ? <span className="font-medium text-[#5C5A55]"> {row.priceUnit}</span> : null}
-                  </div>
-                  {mode === "admin" ? (
-                    <div className="mt-2">
-                      <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase", statusClass(row.status))}>
-                        {row.status}
-                      </span>
-                    </div>
+                  {row.description ? (
+                    <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-white/75">
+                      {row.description}
+                    </p>
                   ) : null}
-                  <div className="mt-3 border-t border-[#ECEAE4] pt-3">
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {(row.tags ?? [row.gradeLabel, row.price ? `${row.price}${row.priceUnit ? ` ${row.priceUnit}` : ""}` : null].filter(Boolean) as string[]).map((tag) => (
+                      <span key={tag} className="rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  {mode === "school" ? (
+                    <div
+                      className="mt-2 grid grid-cols-1 gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         type="button"
                         variant="secondary"
                         size="sm"
-                        className="w-full"
-                        onClick={() => onViewItem(row.id)}
+                        className="w-full border-white/30 text-white hover:bg-white/10"
+                        onClick={() => onAddToWishlist?.(row.id)}
                       >
-                        {t("common.view")}
+                        {t("mvpPages.catalogue.addWishlist")}
                       </Button>
-                      {mode === "school" ? (
-                        <>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => onAddToWishlist?.(row.id)}
-                          >
-                            {t("mvpPages.catalogue.addWishlist")}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="w-full bg-[#0A1628] text-white hover:bg-[#071E36]"
-                            onClick={() => onAddToRfq?.(row.id)}
-                          >
-                            {t("mvpPages.catalogue.addRfq")}
-                          </Button>
-                        </>
-                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="w-full bg-white text-[#0A1628] hover:bg-white/90"
+                        onClick={() => onAddToRfq?.(row.id)}
+                      >
+                        {t("mvpPages.catalogue.addRfq")}
+                      </Button>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               </article>
             ))}

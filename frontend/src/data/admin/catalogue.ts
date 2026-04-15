@@ -33,9 +33,28 @@ export type CatalogueLineItem = {
   price: string;
   priceUnit?: string;
   status: CatalogueProductStatus;
+  /** Short description shown on the card (max 3 lines) */
+  description?: string;
+  /** Tag pills shown on the card e.g. ["Science", "Print", "American"] */
+  tags?: string[];
   /** Cover on line-item cards (uploaded URL; demo uses a stable placeholder) */
   coverImageUrl?: string;
+  /**
+   * URL shown inside the e-book preview iframe (PDF or vendor reader).
+   * If omitted, `getEbookPreviewUrl` uses PDF.js with a public demo PDF.
+   */
+  ebookPreviewUrl?: string;
 };
+
+/** Small public PDF for demo iframe preview (CORS-friendly). */
+const EBOOK_DEMO_PDF_FALLBACK = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+
+/** Resolves the iframe `src` for catalogue line-item “View” (e-book) preview. */
+export function getEbookPreviewUrl(lineItem: CatalogueLineItem): string {
+  const u = lineItem.ebookPreviewUrl?.trim();
+  if (u) return u;
+  return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(EBOOK_DEMO_PDF_FALLBACK)}`;
+}
 
 /**
  * Curated book / education stock placeholders (Unsplash). Picked deterministically by `itemId`
@@ -126,9 +145,16 @@ function tbItems(
   fromG: number,
   toG: number,
   basePrice: number,
+  tags: string[] = [],
 ): CatalogueLineItem[] {
   const out: CatalogueLineItem[] = [];
   let i = 0;
+  const tbDescriptions = [
+    "Comprehensive student edition covering core concepts with hands-on activities, visual aids, and formative assessments aligned to curriculum standards.",
+    "Engaging grade-level content with inquiry-based lessons, real-world connections, and differentiated support for all learners.",
+    "Standards-aligned student book featuring rich visuals, guided practice, and end-of-unit reviews to reinforce key learning objectives.",
+    "Interactive student edition with STEM integration, collaborative projects, and digital extension activities for deeper understanding.",
+  ];
   for (let g = fromG; g <= toG; g++) {
     const p = basePrice + i * 2;
     const id = `${folderId}-g${g}`;
@@ -140,6 +166,8 @@ function tbItems(
       price: `AED ${p}`,
       priceUnit: "/ student",
       status: "Published",
+      description: tbDescriptions[i % tbDescriptions.length],
+      tags: [`G${g}`, ...tags],
       coverImageUrl: defaultLineItemCoverUrl(id),
     });
     i++;
@@ -168,6 +196,11 @@ function digitalLicenceItems(folderId: string, series: string, fromG: number, to
 }
 
 function libStageItems(folderId: string, prefix: string, stages: string[], base: number): CatalogueLineItem[] {
+  const libDescriptions = [
+    "A carefully levelled reading collection with decodable texts, rich illustrations, and comprehension activities to build fluency.",
+    "Engaging fiction and non-fiction titles selected to develop vocabulary, reading stamina, and a love of books.",
+    "Stage-appropriate stories and informational texts with guided reading notes and discussion prompts for classroom use.",
+  ];
   return stages.map((st, i) => {
     const id = `${folderId}-s${i + 1}`;
     return {
@@ -178,6 +211,8 @@ function libStageItems(folderId: string, prefix: string, stages: string[], base:
       price: `AED ${base + i * 4}`,
       priceUnit: "/ title",
       status: "Published" as const,
+      description: libDescriptions[i % libDescriptions.length],
+      tags: [st, "Library", "English"],
       coverImageUrl: defaultLineItemCoverUrl(id),
     };
   });
@@ -222,7 +257,7 @@ export const catalogueTextbooks: CatalogueProductRow[] = [
     detailLine: "Folder · 8 grade-level student books",
     curriculum: "American",
     gradeBuckets: ["G1–G3", "G4–G6", "G7–G9"],
-    lineItems: tbItems("tb-inspire", "Inspire Science", 1, 8, 85),
+    lineItems: tbItems("tb-inspire", "Inspire Science", 1, 8, 85, ["Science", "Print", "American"]),
     folderPriceLabel: "8 titles · From AED 85",
     folderDetailSummary: "ISBN & price are set per grade-level book",
     folderAccess: { passwordProtected: true, schoolAccessExpired: false },
@@ -241,7 +276,7 @@ export const catalogueTextbooks: CatalogueProductRow[] = [
     detailLine: "Folder · 12 grade-level volumes",
     curriculum: "American",
     gradeBuckets: ["G1–G3", "G4–G6", "G7–G9", "G10–G12"],
-    lineItems: tbItems("tb-reveal", "Reveal Math", 1, 12, 92),
+    lineItems: tbItems("tb-reveal", "Reveal Math", 1, 12, 92, ["Maths", "Print", "American"]),
     folderPriceLabel: "12 titles · From AED 92",
     folderDetailSummary: "Each grade has its own ISBN and list price",
     folderAccess: { passwordProtected: false },
@@ -260,7 +295,7 @@ export const catalogueTextbooks: CatalogueProductRow[] = [
     detailLine: "Folder · 12 print student books",
     curriculum: "UAE + Saudi",
     gradeBuckets: ["G1–G3", "G4–G6", "G7–G9", "G10–G12"],
-    lineItems: tbItems("tb-kodeit-ss", "Kodeit Social Sciences", 1, 12, 72),
+    lineItems: tbItems("tb-kodeit-ss", "Kodeit Social Sciences", 1, 12, 72, ["Social Studies", "Print", "UAE"]),
     folderPriceLabel: "12 titles · From AED 72",
     folderDetailSummary: "Per-grade ISBN (NCC) and school pricing",
     folderAccess: { passwordProtected: false },
@@ -298,7 +333,7 @@ export const catalogueTextbooks: CatalogueProductRow[] = [
     detailLine: "Folder · 6 grade-level ELA bundles",
     curriculum: "American",
     gradeBuckets: ["G1–G3", "G4–G6"],
-    lineItems: tbItems("tb-wonders", "Wonders", 1, 6, 80),
+    lineItems: tbItems("tb-wonders", "Wonders", 1, 6, 80, ["English", "Print", "American"]),
     folderPriceLabel: "6 titles · From AED 80",
     folderDetailSummary: "Student bundle per grade",
     folderAccess: { passwordProtected: false },

@@ -12,7 +12,7 @@ import {
   rfqPipelineStages,
   salesAggregateStats,
   salesTeamDashboard,
-} from "../../../data/admin/dashboard";
+} from "../../../data/admin-dashboard";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
 import { Button } from "../../components/Button";
 import { cn } from "../../utils/cn";

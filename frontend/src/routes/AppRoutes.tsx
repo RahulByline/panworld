@@ -42,7 +42,7 @@ import { UsersPage } from "../ui/pages/app/UsersPage.tsx";
 import { SyncLogsPage } from "../ui/pages/app/SyncLogsPage.tsx";
 import { CurriculumMappingPage } from "../ui/pages/app/CurriculumMappingPage.tsx";
 import { DemoHubPage } from "../ui/pages/app/DemoHubPage.tsx";
-import { AdminDashboard } from "../ui/pages/admin/AdminDashboard.tsx";
+import { AdminDashboard } from "../ui/pages/admin-dashboard";
 import { AdminSchoolsPage } from "../ui/pages/admin/AdminSchoolsPage.tsx";
 import { AdminRfqPipelinePage } from "../ui/pages/admin/AdminRfqPipelinePage.tsx";
 import { AdminAnalyticsPage } from "../ui/pages/admin/AdminAnalyticsPage.tsx";
@@ -64,7 +64,7 @@ import { AdminInvoicesPage } from "../ui/pages/admin/AdminInvoicesPage.tsx";
 import { AdminSamplesPage } from "../ui/pages/admin/AdminSamplesPage.tsx";
 import { AdminWebinarsPage } from "../ui/pages/admin/AdminWebinarsPage.tsx";
 import { AdminCertificationsPage } from "../ui/pages/admin/AdminCertificationsPage.tsx";
-import { AdminPublisherDashboardPage } from "../ui/pages/admin/AdminPublisherDashboardPage.tsx";
+import { AdminPublisherDashboardPage } from "../ui/pages/admin-dashboard";
 import { AdminOdooPage } from "../ui/pages/admin/AdminOdooPage.tsx";
 import { AdminSettingsPage } from "../ui/pages/admin/AdminSettingsPage.tsx";
 

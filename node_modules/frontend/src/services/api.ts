@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 /**
  * Axios merges `baseURL` + `url` like `new URL(url, baseURL)`.
@@ -41,3 +41,74 @@ export function setAccessToken(token: string | null) {
   if (token) api.defaults.headers.common.Authorization = `Bearer ${token}`;
   else delete api.defaults.headers.common.Authorization;
 }
+
+type RequestWithRetry = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+function tryRefreshAccessToken(): Promise<boolean> {
+  if (!refreshInFlight) {
+    const base = api.defaults.baseURL ?? "";
+    refreshInFlight = (async () => {
+      try {
+        const res = await axios.post<{ ok?: boolean; data?: { accessToken?: string } }>(
+          `${base}auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+        const token = res.data?.data?.accessToken;
+        if (token) {
+          setAccessToken(token);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error: AxiosError) => {
+    const status = error.response?.status;
+    const originalRequest = error.config as RequestWithRetry | undefined;
+    if (status !== 401 || !originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const rel = String(originalRequest.url ?? "");
+    if (rel.includes("auth/login")) {
+      return Promise.reject(error);
+    }
+    /** Initial bootstrap refresh without a session — do not force logout redirect. */
+    if (rel.includes("auth/refresh")) {
+      return Promise.reject(error);
+    }
+    if (originalRequest._retry) {
+      const { sessionExpired } = await import("../store/auth.store");
+      sessionExpired();
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+    const ok = await tryRefreshAccessToken();
+    if (!ok) {
+      const { sessionExpired } = await import("../store/auth.store");
+      sessionExpired();
+      return Promise.reject(error);
+    }
+
+    const auth = api.defaults.headers.common.Authorization;
+    if (typeof auth === "string") {
+      const headers = AxiosHeaders.from(originalRequest.headers ?? {});
+      headers.set("Authorization", auth);
+      originalRequest.headers = headers;
+    }
+    return api(originalRequest);
+  },
+);

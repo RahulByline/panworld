@@ -2,8 +2,14 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { catalogueHaystack, catalogueLibraryBooks, getCatalogueFolder } from "../../../data/admin/catalogue";
+import {
+  catalogueHaystack,
+  catalogueLibraryBooks,
+  getCatalogueFolder,
+  type CatalogueLineItem,
+} from "../../../data/admin/catalogue";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
+import { CatalogueEbookPreviewModal } from "../../admin/components/catalogue/CatalogueEbookPreviewModal";
 import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
 import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
 import { PwPageHeader } from "../../panworld/PwPageHeader";
@@ -13,6 +19,7 @@ export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { show, Toast } = useAdminToast();
   const [q, setQ] = useState("");
+  const [ebookPreviewItem, setEbookPreviewItem] = useState<CatalogueLineItem | null>(null);
 
   const products = useMemo(() => catalogueLibraryBooks.filter((p) => p.status === "Published"), []);
 
@@ -53,9 +60,18 @@ export function LibraryPage() {
           onBack={closeFolder}
           onAddBook={() => undefined}
           onEditFolder={() => undefined}
-          onViewItem={() => show(t("common.view"))}
+          onViewItem={(itemId) => {
+            const item = folderProduct.lineItems.find((li) => li.id === itemId);
+            if (item) setEbookPreviewItem(item);
+          }}
           onAddToWishlist={() => show(t("mvpPages.catalogue.addWishlist"))}
           onAddToRfq={() => show(t("mvpPages.catalogue.addRfq"))}
+        />
+        <CatalogueEbookPreviewModal
+          open={ebookPreviewItem !== null}
+          onClose={() => setEbookPreviewItem(null)}
+          lineItem={ebookPreviewItem}
+          folderName={folderProduct.name}
         />
       </div>
     );

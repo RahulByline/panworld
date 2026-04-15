@@ -24,11 +24,10 @@ export function AuthLayout() {
 
             <div className="mt-10 md:mt-16">
               <div className="text-3xl font-semibold leading-tight text-slate-900 md:text-5xl">
-                Partner portal for schools, publishers, and procurement.
+              {t("app.title")}
               </div>
               <div className="mt-3 max-w-2xl text-sm text-slate-600">
-                A modern, role-based workspace for catalogue discovery, training enablement, RFQ workflows, orders, and visibility—built for bilingual
-                EN/AR and RTL support.
+              {t("app.description")}
               </div>
 
               <div className="mt-8 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">

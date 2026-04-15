@@ -5,9 +5,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import type { PublisherAccessRow } from "../../../data/admin/publisherAccess";
 import { AM_PORTFOLIO_SCHOOLS } from "../../../data/admin/amPortfolioSchools";
-
-const inp = "w-full rounded-lg border border-[#E2E0D9] bg-white px-3 py-2 text-sm text-[#1A1917] outline-none focus:border-[#0A3D62]";
-const lbl = "mb-1 block text-xs font-medium text-[#5C5A55]";
+import { inp, lbl } from "./formStyles";
 
 type Base = { open: boolean; onClose: () => void; onSaved: (msg: string) => void };
 
