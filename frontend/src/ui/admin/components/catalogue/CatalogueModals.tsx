@@ -118,14 +118,14 @@ const SUBJECTS = ["Science", "Mathematics", "English / ELA", "Social Sciences", 
 
 function CreatableSelect({ value, onChange, options, placeholder, addLabel }: { value: string, onChange: (v: string) => void, options: string[], placeholder?: string, addLabel: string }) {
   const [isCustom, setIsCustom] = useState(() => !options.includes(value) && value !== "");
-  
+
   if (isCustom) {
     return (
       <div className="flex w-full items-center gap-2">
-        <input 
-          className={inp} 
-          value={value} 
-          onChange={(e) => onChange(e.target.value)} 
+        <input
+          className={inp}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoFocus
         />
@@ -135,17 +135,17 @@ function CreatableSelect({ value, onChange, options, placeholder, addLabel }: { 
   }
 
   return (
-    <select 
-       className={inp} 
-       value={options.includes(value) ? value : ""} 
-       onChange={(e) => {
-         if (e.target.value === "__ADD_NEW__") {
-           setIsCustom(true);
-           onChange("");
-         } else {
-           onChange(e.target.value);
-         }
-       }}
+    <select
+      className={inp}
+      value={options.includes(value) ? value : ""}
+      onChange={(e) => {
+        if (e.target.value === "__ADD_NEW__") {
+          setIsCustom(true);
+          onChange("");
+        } else {
+          onChange(e.target.value);
+        }
+      }}
     >
       <option value="">{placeholder || "Select..."}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -443,7 +443,7 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
           <label className={lbl}>{t("admin.catalogueModals.publisher")} *</label>
           <select className={inp} value={form.publisher} onChange={(e) => set("publisher", e.target.value)}>
             <option value="">{t("admin.catalogueModals.selectPublisher")}</option>
-            {["McGraw Hill","Kodeit Global","StudySync","Oxford","Cambridge","Pearson","Jolly Phonics"].map((p) => (
+            {["McGraw Hill", "Kodeit Global", "StudySync", "Oxford", "Cambridge", "Pearson", "Jolly Phonics"].map((p) => (
               <option key={p}>{p}</option>
             ))}
           </select>
@@ -486,12 +486,12 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
         </div>
         <div>
           <label className={lbl}>{t("admin.catalogueModals.subject")}</label>
-          <CreatableSelect 
-            value={form.subject} 
-            onChange={(v) => set("subject", v)} 
-            options={SUBJECTS} 
-            placeholder={t("admin.catalogueModals.selectSubject")} 
-            addLabel="+ Add Subject" 
+          <CreatableSelect
+            value={form.subject}
+            onChange={(v) => set("subject", v)}
+            options={SUBJECTS}
+            placeholder={t("admin.catalogueModals.selectSubject")}
+            addLabel="+ Add Subject"
           />
         </div>
       </div>
@@ -507,7 +507,7 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
             </label>
           </div>
         </div>
-        
+
         {form.gradeMode === "single" ? (
           <select className={inp} value={form.singleGrade} onChange={(e) => set("singleGrade", e.target.value)}>
             {GRADES.map((g) => <option key={g} value={g}>{g === "" ? t("admin.catalogueModals.selectGrade") : g}</option>)}
