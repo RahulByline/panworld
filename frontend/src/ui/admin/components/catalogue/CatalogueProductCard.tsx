@@ -10,6 +10,7 @@ import {
 } from "../../../../data/admin/catalogue";
 import { knowledgeCardThemeFromId } from "../../../school/KnowledgeProductCard";
 import { cn } from "../../../utils/cn";
+import { stripHtml, truncate } from "../../../utils/text";
 
 function collageCoverUrls(p: CatalogueProductRow): string[] {
   return [0, 1, 2, 3].map((i) => {
@@ -164,7 +165,9 @@ export function CatalogueProductCard({
             <span className="pw-kc-meta-rest">{metaParts.rest}</span>
           </p>
           {detailForTab(tab, p) ? (
-            <p className="mt-0.5 text-[11px] font-light leading-snug text-[#78909c]">{detailForTab(tab, p)}</p>
+            <p className="mt-0.5 text-[11px] font-light leading-snug text-[#78909c]" title={stripHtml(detailForTab(tab, p))}>
+              {truncate(stripHtml(detailForTab(tab, p)), 160)}
+            </p>
           ) : null}
 
           <p className="pw-kc-price">

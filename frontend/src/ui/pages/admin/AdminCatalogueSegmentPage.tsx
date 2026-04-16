@@ -25,6 +25,7 @@ import {
   TB_STATUS_OPTIONS,
 } from "../../../data/admin/catalogueFilterConfig";
 import { cn } from "../../utils/cn";
+import { stripHtml, truncate } from "../../utils/text";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
 import { api } from "../../../services/api";
 import {
@@ -134,7 +135,7 @@ function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingC
       min == null
         ? `${lineItems.length} title${lineItems.length === 1 ? "" : "s"}`
         : `${lineItems.length} title${lineItems.length === 1 ? "" : "s"} · From AED ${min}`,
-    folderDetailSummary: series.description || series.subject,
+    folderDetailSummary: stripHtml(series.description || series.subject),
     folderAccess: { passwordProtected: false },
   };
 }
@@ -665,8 +666,8 @@ export function AdminCatalogueSegmentPage() {
                     <td className="px-4 py-3">{p.publisher}</td>
                     <td className="px-4 py-3">{p.grades}</td>
                     <td className="px-4 py-3">{p.format}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-[#5C5A55]" title={p.detailLine}>
-                      {p.detailLine}
+                    <td className="max-w-[200px] truncate px-4 py-3 text-[#5C5A55]" title={stripHtml(p.detailLine)}>
+                      {truncate(stripHtml(p.detailLine), 100)}
                     </td>
                     <td className="px-4 py-3 font-medium">
                       {p.lineItems.length > 0 ? p.folderPriceLabel : `${p.price}${p.priceUnit ?? ""}`}
