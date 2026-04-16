@@ -15,6 +15,7 @@ const RESOURCE_TYPES = new Set([
   "KIT",
   "DIGITAL_LICENSE",
   "ASSESSMENT",
+  "BROCHURE",
   "OTHER",
 ]);
 
@@ -82,6 +83,7 @@ function parseCreateItem(body) {
   const title = t(body.title);
   const gradeLabel = t(body.gradeLabel);
   const price = Number(body.price);
+  const currencyCode = t(body.currencyCode || body.currency || "AED").toUpperCase();
   const priceUnit = t(body.priceUnit) || "/ student";
   const status = t(body.status) || "Draft";
   const subject = t(body.subject) || null;
@@ -102,6 +104,7 @@ function parseCreateItem(body) {
     isbn: t(body.isbn) || null,
     format: t(body.format) || "Print",
     price,
+    currencyCode,
     priceUnit,
     status,
     coverImageUrl: t(body.coverImageUrl) || null,
@@ -248,7 +251,7 @@ exports.createSeriesItem = async (req, res, next) => {
       `INSERT INTO catalogue_series_items (
          id, series_id, resource_type, title, subject, grade_label, internal_sku, isbn, format, list_price, currency_code,
          price_unit, status, cover_image_url, material_link_url, material_file_url, inventory_note
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AED', ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         itemId,
         seriesId,
@@ -260,6 +263,7 @@ exports.createSeriesItem = async (req, res, next) => {
         input.isbn,
         input.format,
         input.price,
+        input.currencyCode,
         input.priceUnit,
         input.status,
         input.coverImageUrl,

@@ -94,7 +94,7 @@ const catalogueStorage = multer.diskStorage({
 
 const uploadCatalogueItemAssets = multer({
   storage: catalogueStorage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 500 * 1024 * 1024 }, // increased from 20MB to 500MB
 });
 
 function maybeCatalogueItemAssetsUpload(req, res, next) {

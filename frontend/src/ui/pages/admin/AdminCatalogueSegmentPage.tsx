@@ -103,11 +103,11 @@ function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingC
 
   const lineItems: CatalogueLineItem[] = items.map((it) => ({
     id: it.id,
-    title: it.resourceType ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
+    title: it.resourceType && it.resourceType !== "BROCHURE" ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
     gradeLabel: it.gradeLabel,
     isbn: it.isbn || undefined,
-    price: `AED ${Number(it.listPrice)}`,
-    priceUnit: it.priceUnit,
+    price: it.resourceType === "BROCHURE" ? "Free" : `AED ${Number(it.listPrice)}`,
+    priceUnit: it.resourceType === "BROCHURE" ? "" : it.priceUnit,
     status: it.status,
     coverImageUrl: fixUrl(it.coverImageUrl) || undefined,
     ebookPreviewUrl: fixUrl(it.materialFileUrl) || fixUrl(it.materialLinkUrl) || undefined,
@@ -299,15 +299,27 @@ export function AdminCatalogueSegmentPage() {
       if (input.isbn) fd.append("isbn", input.isbn);
       fd.append("format", input.format);
       fd.append("price", String(input.price));
+      fd.append("currencyCode", input.currency);
       fd.append("priceUnit", input.priceUnit);
       fd.append("status", input.status);
       if (input.materialLinkUrl) fd.append("materialLinkUrl", input.materialLinkUrl);
       if (input.inventoryNote) fd.append("inventoryNote", input.inventoryNote);
-      if (input.coverImageFile) fd.append("coverImage", input.coverImageFile);
+       if (input.coverImageFile) fd.append("coverImage", input.coverImageFile);
       if (input.materialFile) fd.append("materialFile", input.materialFile);
-      await api.post(`admin/catalogue/series/${currentFolderId}/items`, fd);
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, fd, {
+        onUploadProgress: (ev) => {
+          if (ev.total) input.onProgress?.(Math.round((ev.loaded * 100) / ev.total));
+        },
+      });
     } else {
-      await api.post(`admin/catalogue/series/${currentFolderId}/items`, input);
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, {
+        ...input,
+        currencyCode: input.currency,
+      }, {
+        onUploadProgress: (ev) => {
+          if (ev.total) input.onProgress?.(Math.round((ev.loaded * 100) / ev.total));
+        },
+      });
     }
     await loadTextbookSeries();
   }
@@ -435,6 +447,7 @@ export function AdminCatalogueSegmentPage() {
           onClose={() => setBookModalOpen(false)}
           onSaved={show}
           mode="add"
+          category={tab}
           onAdd={handleAddLineItem}
           onCreateItem={tab === "textbooks" ? handleCreateSeriesItem : undefined}
         />
