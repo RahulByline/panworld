@@ -50,10 +50,16 @@ export function AssignProductsToSchoolModal({
   useEffect(() => {
     if (!open) return;
     const first = initialSchoolId && schools.some((s) => s.id === initialSchoolId) ? initialSchoolId : schools[0]?.id ?? "";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSchoolId(first);
     setDraftIds(new Set(getAssignments(first)));
-  }, [open, initialSchoolId, schools]);
+    setPublisher(PUBLISHER_FILTER_ALL);
+    setSubject(SUBJECT_FILTER_ALL);
+    setType(TYPE_FILTER_ALL);
+    setAccessLevel("full");
+    setValidUntil("2027-08-31");
+    setNotes("");
+    setNotifyWa(true);
+  }, [open, initialSchoolId, schools, getAssignments]);
 
   const filteredProducts = useMemo(() => {
     return ASSIGNABLE_PRODUCTS.filter((p) => {

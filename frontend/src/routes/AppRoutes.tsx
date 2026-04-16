@@ -44,7 +44,6 @@ import { CurriculumMappingPage } from "../ui/pages/app/CurriculumMappingPage.tsx
 import { DemoHubPage } from "../ui/pages/app/DemoHubPage.tsx";
 import { AdminDashboard } from "../ui/pages/admin-dashboard";
 import { AdminSchoolsPage } from "../ui/pages/admin/AdminSchoolsPage.tsx";
-import { AdminSchoolDetailsPage } from "../ui/pages/admin/AdminSchoolDetailsPage.tsx";
 import { AdminRfqPipelinePage } from "../ui/pages/admin/AdminRfqPipelinePage.tsx";
 import { AdminAnalyticsPage } from "../ui/pages/admin/AdminAnalyticsPage.tsx";
 import { AdminSupportTicketsPage } from "../ui/pages/admin/AdminSupportTicketsPage.tsx";
@@ -148,7 +147,6 @@ export function AppRoutes() {
         <Route path="integrations" element={<AdminIntegrationsPage />} />
         <Route path="odoo" element={<AdminOdooPage />} />
         <Route path="schools" element={<AdminSchoolsPage />} />
-        <Route path="schools/:id" element={<AdminSchoolDetailsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="rfq" element={<AdminRfqPipelinePage />} />
         <Route path="orders" element={<AdminOrdersPage />} />

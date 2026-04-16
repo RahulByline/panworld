@@ -148,21 +148,12 @@ function mapSchoolRowToApi(row) {
   if (row.branding) {
     try {
       const b = typeof row.branding === "string" ? JSON.parse(row.branding) : row.branding;
-      if (b?.logoUrl) {
-        // Fix old logo URLs that are missing the /api prefix
-        logoFromBranding = b.logoUrl.includes('/files/school-logos/') && !b.logoUrl.includes('/api/files/school-logos/')
-          ? b.logoUrl.replace('/files/school-logos/', '/api/files/school-logos/')
-          : b.logoUrl;
-      }
+      if (b?.logoUrl) logoFromBranding = b.logoUrl;
     } catch {
       /* ignore */
     }
   }
-  let logoUrl = row.logoUrl || logoFromBranding;
-  // Fix old logo URLs that are missing the /api prefix
-  if (logoUrl && logoUrl.includes('/files/school-logos/') && !logoUrl.includes('/api/files/school-logos/')) {
-    logoUrl = logoUrl.replace('/files/school-logos/', '/api/files/school-logos/');
-  }
+  const logoUrl = row.logoUrl || logoFromBranding;
 
   let enabledModules = DEFAULT_MODULES;
   if (row.enabledModules != null) {
@@ -245,7 +236,7 @@ exports.update = async (req, res, next) => {
     if (!id) throw badRequest("School id required");
     const raw = { ...req.body };
     if (req.file) {
-      raw.logoUrl = `${env.FILE_PUBLIC_BASE}/api/files/school-logos/${req.file.filename}`;
+      raw.logoUrl = `${env.FILE_PUBLIC_BASE}/files/school-logos/${req.file.filename}`;
     }
     for (const k of Object.keys(raw)) {
       if (raw[k] === "") delete raw[k];
@@ -317,7 +308,7 @@ exports.create = async (req, res, next) => {
   try {
     const raw = { ...req.body };
     if (req.file) {
-      raw.logoUrl = `${env.FILE_PUBLIC_BASE}/api/files/school-logos/${req.file.filename}`;
+      raw.logoUrl = `${env.FILE_PUBLIC_BASE}/files/school-logos/${req.file.filename}`;
     }
     for (const k of Object.keys(raw)) {
       if (raw[k] === "") delete raw[k];
@@ -671,35 +662,6 @@ exports.updateSchoolUser = async (req, res, next) => {
     await pool.query(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, vals);
 
     res.json({ ok: true, data: { user: { id: userId } } });
-  } catch (e) {
-    next(e);
-  }
-};
-
-exports.delete = async (req, res, next) => {
-  try {
-    const id = t(req.params.id);
-    if (!id) throw badRequest("School id required");
-
-    const conn = await pool.getConnection();
-    try {
-      await conn.beginTransaction();
-
-      // Delete school users
-      await conn.query(`DELETE FROM users WHERE school_id = ?`, [id]);
-
-      // Delete school
-      const [result] = await conn.query(`DELETE FROM schools WHERE id = ?`, [id]);
-      if (result.affectedRows === 0) throw notFound("School not found");
-
-      await conn.commit();
-      res.json({ ok: true, data: { id } });
-    } catch (e) {
-      await conn.rollback();
-      throw e;
-    } finally {
-      conn.release();
-    }
   } catch (e) {
     next(e);
   }

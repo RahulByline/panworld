@@ -30,6 +30,3 @@ dist-ssr
 # Local uploads (school logos, etc.)
 panworld/backend/uploads/*
 !panworld/backend/uploads/.gitkeep
-node_modules
-node_modules
-node_modules
