@@ -6,7 +6,7 @@ import { UploadZone } from "./CatalogueModals";
 import { inp, lbl, row2 } from "../formStyles";
 import type { CatalogueLineItem } from "../../../../data/admin/catalogue";
 export type CatalogueSeriesItemCreateInput = {
-  resourceType: "TEXTBOOK" | "LIBRARY_BOOK" | "TEACHER_GUIDE" | "PRACTICE_BOOK" | "KIT" | "DIGITAL_LICENSE" | "ASSESSMENT" | "OTHER";
+  resourceType: "TEXTBOOK" | "LIBRARY_BOOK" | "TEACHER_GUIDE" | "PRACTICE_BOOK" | "KIT" | "DIGITAL_LICENSE" | "ASSESSMENT" | "BROCHURE" | "OTHER";
   title: string;
   subject?: string;
   gradeLabel: string;
@@ -14,12 +14,14 @@ export type CatalogueSeriesItemCreateInput = {
   isbn?: string;
   format: string;
   price: number;
+  currency: string;
   priceUnit: string;
   status: CatalogueLineItem["status"];
   materialLinkUrl?: string;
   inventoryNote?: string;
   coverImageFile?: File;
   materialFile?: File;
+  onProgress?: (pct: number) => void;
 };
 
 type Props = {
@@ -28,45 +30,108 @@ type Props = {
   onSaved: (msg: string) => void;
   mode: "add" | "edit";
   onAdd?: (item: CatalogueLineItem) => void;
+  category?: "textbooks" | "library" | "kits";
   onCreateItem?: (input: CatalogueSeriesItemCreateInput) => Promise<void>;
 };
 
 const empty = () => ({
   title: "",
-  gradeLabel: "",
   isbn: "",
-  price: "",
-  priceUnit: "/ student",
   status: "Published" as CatalogueLineItem["status"],
 });
 
-export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, onCreateItem }: Props) {
+const GRADES = ["", "KG Level 1", "KG Level 2", "KG Level 3", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+const SUBJECTS = ["Science", "Mathematics", "English / ELA", "Social Sciences", "ICT", "Arabic", "Islamic Studies"];
+const PRICE_UNITS = ["/ student", "/ licence", "/ title", "/ set", "/ bundle", "/ classroom"];
+
+function CreatableSelect({ value, onChange, options, placeholder, addLabel }: { value: string, onChange: (v: string) => void, options: string[], placeholder?: string, addLabel: string }) {
+  const [isCustom, setIsCustom] = useState(() => !options.includes(value) && value !== "");
+
+  if (isCustom) {
+    return (
+      <div className="flex w-full items-center gap-2">
+        <input
+          className={inp}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoFocus
+        />
+        <button type="button" className="shrink-0 text-[11px] font-semibold text-[#5C5A55] hover:text-red-500" onClick={() => { setIsCustom(false); onChange(""); }}>Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <select
+      className={inp}
+      value={options.includes(value) ? value : ""}
+      onChange={(e) => {
+        if (e.target.value === "__ADD_NEW__") {
+          setIsCustom(true);
+          onChange("");
+        } else {
+          onChange(e.target.value);
+        }
+      }}
+    >
+      <option value="">{placeholder || "Select..."}</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      <option value="__ADD_NEW__" className="font-semibold text-[#0A3D62]">{addLabel}</option>
+    </select>
+  );
+}
+
+export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, category, onCreateItem }: Props) {
   const { t } = useTranslation();
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [internalSku, setInternalSku] = useState("");
-  const [format, setFormat] = useState("Print");
   const [resourceType, setResourceType] = useState<CatalogueSeriesItemCreateInput["resourceType"]>("TEXTBOOK");
   const [subject, setSubject] = useState("");
+  const [materialSource, setMaterialSource] = useState<"link" | "file">("link");
   const [materialLinkUrl, setMaterialLinkUrl] = useState("");
   const [inventoryNote, setInventoryNote] = useState("");
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [materialFile, setMaterialFile] = useState<File | null>(null);
+
+  const [format, setFormat] = useState("Print");
+  const [currency, setCurrency] = useState("AED");
+  const [price, setPrice] = useState("");
+  const [priceUnit, setPriceUnit] = useState("/ student");
+  const [otherLabel, setOtherLabel] = useState("");
+  const [gradeMode, setGradeMode] = useState<"single" | "range">("single");
+  const [singleGrade, setSingleGrade] = useState("");
+  const [gradeFrom, setGradeFrom] = useState("");
+  const [gradeTo, setGradeTo] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (open) {
       setForm(empty());
       setErrors({});
       setInternalSku("");
-      setFormat("Print");
-      setResourceType("TEXTBOOK");
+      setResourceType(category === "library" ? "LIBRARY_BOOK" : category === "kits" ? "KIT" : "TEXTBOOK");
       setSubject("");
+      setMaterialSource("link");
       setMaterialLinkUrl("");
       setInventoryNote("");
       setCoverImageFile(null);
       setMaterialFile(null);
+      setFormat("Print");
+      setCurrency("AED");
+      setPrice("");
+      setPriceUnit("/ student");
+      setOtherLabel("");
+      setGradeMode("single");
+      setSingleGrade("");
+      setGradeFrom("");
+      setGradeTo("");
+      setIsUploading(false);
+      setUploadProgress(0);
     }
-  }, [open]);
+  }, [open, category]);
 
   function set<K extends keyof ReturnType<typeof empty>>(k: K, v: ReturnType<typeof empty>[K]) {
     setForm((p) => ({ ...p, [k]: v }));
@@ -76,54 +141,88 @@ export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, on
   function validate() {
     const e: Record<string, string> = {};
     if (!form.title.trim()) e.title = "Required";
-    if (!form.gradeLabel.trim()) e.gradeLabel = "Required";
-    if (!form.price.trim()) e.price = "Required";
+    if (gradeMode === "single" && !singleGrade) e.grade = "Required";
+    if (gradeMode === "range" && !gradeFrom && !gradeTo) e.grade = "Required";
+    if (resourceType === "OTHER" && !otherLabel.trim()) e.otherLabel = "Required";
+    if (resourceType !== "BROCHURE" && (!price.trim() || Number.isNaN(Number(price.trim())))) e.price = "Required";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   async function submit(asDraft: boolean) {
     if (!validate()) return;
-    const id = `li-${Date.now()}`;
-    const numericPrice = Number(form.price.trim());
-    if (Number.isNaN(numericPrice)) {
-      setErrors((p) => ({ ...p, price: "Required" }));
-      return;
-    }
-    const item: CatalogueLineItem = {
-      id,
-      title: form.title.trim(),
-      gradeLabel: form.gradeLabel.trim(),
-      isbn: form.isbn.trim() || undefined,
-      price: `AED ${form.price.trim()}`,
-      priceUnit: form.priceUnit,
-      status: asDraft ? "Draft" : "Published",
-    };
+    const isBrochure = resourceType === "BROCHURE";
+
+    const calculatedGradeLabel = gradeMode === "single" ? singleGrade : (!gradeFrom && !gradeTo) ? "" : gradeFrom === gradeTo ? gradeFrom : `${gradeFrom}–${gradeTo}`;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
-      if (onCreateItem) {
-        await onCreateItem({
-          resourceType,
-          title: form.title.trim(),
-          subject: subject.trim() || undefined,
-          gradeLabel: form.gradeLabel.trim(),
-          internalSku: internalSku.trim() || undefined,
-          isbn: form.isbn.trim() || undefined,
-          format,
-          price: numericPrice,
-          priceUnit: form.priceUnit,
-          status: asDraft ? "Draft" : "Published",
-          materialLinkUrl: materialLinkUrl.trim() || undefined,
-          inventoryNote: inventoryNote.trim() || undefined,
-          coverImageFile: coverImageFile || undefined,
-          materialFile: materialFile || undefined,
-        });
+      const basePayload = {
+        resourceType,
+        title: form.title.trim(),
+        subject: subject.trim() || undefined,
+        gradeLabel: calculatedGradeLabel,
+        internalSku: internalSku.trim() || undefined,
+        status: (asDraft ? "Draft" : "Published") as CatalogueLineItem["status"],
+        materialLinkUrl: materialSource === "link" ? (materialLinkUrl.trim() || undefined) : undefined,
+        inventoryNote: inventoryNote.trim() || undefined,
+        coverImageFile: coverImageFile || undefined,
+        materialFile: materialSource === "file" ? (materialFile || undefined) : undefined,
+        onProgress: (pct: number) => setUploadProgress(pct),
+      };
+
+      if (isBrochure) {
+        if (onCreateItem) {
+          await onCreateItem({
+            ...basePayload,
+            format: "Digital",
+            price: 0,
+            currency: "AED",
+            priceUnit: "",
+          });
+        } else {
+          onAdd?.({
+            id: `li-${Date.now()}`,
+            title: basePayload.title,
+            gradeLabel: basePayload.gradeLabel,
+            price: "Free",
+            priceUnit: "",
+            status: basePayload.status,
+          });
+        }
       } else {
-        onAdd?.(item);
+        if (onCreateItem) {
+          await onCreateItem({
+            ...basePayload,
+            format,
+            price: Number(price),
+            currency,
+            priceUnit,
+            isbn: form.isbn || undefined,
+          });
+        } else {
+          onAdd?.({
+            id: `li-${Date.now()}`,
+            title: basePayload.title,
+            gradeLabel: basePayload.gradeLabel,
+            isbn: form.isbn || undefined,
+            price: `${currency} ${price}`,
+            priceUnit,
+            status: basePayload.status,
+          });
+        }
       }
       onSaved(asDraft ? t("admin.pages.catalogueFolder.bookModalSavedDraft") : t("admin.pages.catalogueFolder.bookModalSavedPublish"));
       onClose();
-    } catch {
-      onSaved("Could not save line item right now. Please try again.");
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      const msg = err?.response?.data?.error?.message || "Could not save line item right now. Please try again.";
+      onSaved(msg);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -133,14 +232,29 @@ export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, on
     <AdminModal open={open} onClose={onClose} title={title} wide
       footer={
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
-          <Button type="button" variant="secondary" onClick={() => submit(true)}>{t("admin.catalogueModals.saveDraft")}</Button>
-          <Button type="button" className="bg-[#0A3D62] text-white hover:bg-[#071E36]" onClick={() => submit(false)}>
-            {t("admin.pages.catalogueFolder.bookModalSave")}
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isUploading}>{t("common.cancel")}</Button>
+          <Button type="button" variant="secondary" onClick={() => submit(true)} disabled={isUploading}>
+            {isUploading ? "Uploading..." : t("admin.catalogueModals.saveDraft")}
+          </Button>
+          <Button 
+            type="button" 
+            className="bg-[#0A3D62] text-white hover:bg-[#071E36] min-w-[120px]" 
+            onClick={() => submit(false)}
+            disabled={isUploading}
+          >
+            {isUploading ? `Uploading ${uploadProgress}%` : t("admin.pages.catalogueFolder.bookModalSave")}
           </Button>
         </div>
       }
     >
+      {isUploading && (
+        <div className="mb-4 overflow-hidden rounded-full bg-[#FAFAF8] ring-1 ring-[#E2E0D9]">
+          <div 
+            className="h-2 bg-[#0A3D62] transition-all duration-300 ease-out" 
+            style={{ width: `${uploadProgress}%` }}
+          />
+        </div>
+      )}
       <p className="text-[13px] leading-relaxed text-[#5C5A55]">{t("admin.pages.catalogueFolder.bookModalIntro")}</p>
 
       <div className="mt-4">
@@ -157,28 +271,43 @@ export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, on
         <div className="text-[11px] font-bold uppercase tracking-wide text-[#5C5A55]">
           {t("admin.pages.catalogueFolder.bookModalMaterialSection")}
         </div>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-[#5C5A55]">{t("admin.pages.catalogueFolder.bookModalMaterialHint")}</p>
-        <div className="mt-3">
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalLinkUrl")}</label>
-          <input
-            className={inp}
-            type="url"
-            placeholder={t("admin.pages.catalogueFolder.bookModalLinkPlaceholder")}
-            autoComplete="off"
-            value={materialLinkUrl}
-            onChange={(e) => setMaterialLinkUrl(e.target.value)}
-          />
+        <p className="mt-1.5 mb-3 text-[12px] leading-relaxed text-[#5C5A55]">{t("admin.pages.catalogueFolder.bookModalMaterialHint")}</p>
+
+        <div className="flex items-center gap-4 mb-4">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="radio" checked={materialSource === "link"} onChange={() => setMaterialSource("link")} className="text-[#0A3D62]" />
+            Provide Direct Link
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="radio" checked={materialSource === "file"} onChange={() => setMaterialSource("file")} className="text-[#0A3D62]" />
+            Upload File
+          </label>
         </div>
-        <div className="mt-3">
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalFileUpload")}</label>
-          <UploadZone
-            icon="📎"
-            title={t("admin.pages.catalogueFolder.bookModalFileUploadTitle")}
-            sub={t("admin.pages.catalogueFolder.bookModalFileUploadSub")}
-            accept=".pdf,.ppt,.pptx,.xls,.xlsx,.csv,.doc,.docx,.zip"
-            onFileChange={setMaterialFile}
-          />
-        </div>
+
+        {materialSource === "link" ? (
+          <div className="mt-2">
+            <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalLinkUrl")}</label>
+            <input
+              className={inp}
+              type="url"
+              placeholder={t("admin.pages.catalogueFolder.bookModalLinkPlaceholder")}
+              autoComplete="off"
+              value={materialLinkUrl}
+              onChange={(e) => setMaterialLinkUrl(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="mt-2">
+            <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalFileUpload")}</label>
+            <UploadZone
+              icon="📎"
+              title={t("admin.pages.catalogueFolder.bookModalFileUploadTitle")}
+              sub={t("admin.pages.catalogueFolder.bookModalFileUploadSub")}
+              accept=".pdf,.ppt,.pptx,.xls,.xlsx,.csv,.doc,.docx,.zip"
+              onFileChange={setMaterialFile}
+            />
+          </div>
+        )}
       </div>
 
       {/* Required fields */}
@@ -192,27 +321,53 @@ export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, on
         <div>
           <label className={lbl}>Resource type *</label>
           <select className={inp} value={resourceType} onChange={(e) => setResourceType(e.target.value as CatalogueSeriesItemCreateInput["resourceType"])}>
-            <option value="TEXTBOOK">Textbook</option>
-            <option value="LIBRARY_BOOK">Library book</option>
-            <option value="TEACHER_GUIDE">Teacher guide</option>
-            <option value="PRACTICE_BOOK">Practice book</option>
-            <option value="KIT">Kit</option>
-            <option value="DIGITAL_LICENSE">Digital license</option>
-            <option value="ASSESSMENT">Assessment resource</option>
-            <option value="OTHER">Other</option>
+            {category === "library" ? <option value="LIBRARY_BOOK">Library Book</option> : category === "kits" ? <option value="KIT">Kit Item</option> : <option value="TEXTBOOK">Textbook</option>}
+            <option value="BROCHURE">Brochure / Catalogue</option>
+            <option value="OTHER">Other (Specify)</option>
           </select>
         </div>
-        <div>
-          <label className={lbl}>Subject</label>
-          <input className={inp} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Science / Maths / ELA ..." />
-        </div>
+        {resourceType === "OTHER" ? (
+          <div>
+            <label className={lbl}>Specify Resource Type</label>
+            <input className={inp} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} placeholder="" />
+            {errors.otherLabel ? <p className="mt-1 text-xs text-red-500">{errors.otherLabel}</p> : null}
+          </div>
+        ) : (
+          <div>
+            <label className={lbl}>Subject</label>
+            <CreatableSelect value={subject} onChange={setSubject} options={SUBJECTS} placeholder="— Select Subject —" addLabel="+ Add Subject" />
+          </div>
+        )}
       </div>
 
       <div className={`${row2} mt-3`}>
         <div>
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalGradeOrBand")} *</label>
-          <input className={inp} value={form.gradeLabel} onChange={(e) => set("gradeLabel", e.target.value)} placeholder="G4 · Stage 2 · Component A" />
-          {errors.gradeLabel ? <p className="mt-1 text-xs text-red-500">{errors.gradeLabel}</p> : null}
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalGradeOrBand")} *</label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 text-xs text-[#5C5A55] cursor-pointer">
+                <input type="radio" className="text-[#0A3D62]" checked={gradeMode === "single"} onChange={() => setGradeMode("single")} /> {t("admin.catalogueModals.singleGrade")}
+              </label>
+              <label className="flex items-center gap-1.5 text-xs text-[#5C5A55] cursor-pointer">
+                <input type="radio" className="text-[#0A3D62]" checked={gradeMode === "range"} onChange={() => setGradeMode("range")} /> {t("admin.catalogueModals.gradeRange")}
+              </label>
+            </div>
+          </div>
+          {gradeMode === "single" ? (
+            <select className={inp} value={singleGrade} onChange={(e) => setSingleGrade(e.target.value)}>
+              {GRADES.map((g) => <option key={g} value={g}>{g === "" ? "— Select Grade —" : g}</option>)}
+            </select>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <select className={inp} value={gradeFrom} onChange={(e) => setGradeFrom(e.target.value)}>
+                {GRADES.map((g) => <option key={g} value={g}>{g === "" ? "— Grade From —" : g}</option>)}
+              </select>
+              <select className={inp} value={gradeTo} onChange={(e) => setGradeTo(e.target.value)}>
+                {GRADES.map((g) => <option key={g} value={g}>{g === "" ? "— Grade To —" : g}</option>)}
+              </select>
+            </div>
+          )}
+          {errors.grade ? <p className="mt-1 text-xs text-red-500">{errors.grade}</p> : null}
         </div>
         <div>
           <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalInternalSku")}</label>
@@ -220,33 +375,46 @@ export function CatalogueBookItemModal({ open, onClose, onSaved, mode, onAdd, on
         </div>
       </div>
 
-      <div className={`${row2} mt-3`}>
-        <div>
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalIsbn")}</label>
-          <input className={inp} value={form.isbn} onChange={(e) => set("isbn", e.target.value)} placeholder="978-X-XXX-XXXXX-X" />
-        </div>
-        <div>
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalFormat")}</label>
-          <select className={inp} value={format} onChange={(e) => setFormat(e.target.value)}>
-            <option>Print</option><option>Digital</option><option>Blended</option><option>Kit component</option>
-          </select>
-        </div>
-      </div>
+      {resourceType !== "BROCHURE" && (
+        <div className="mt-5 border-t border-[#E2E0D9] pt-4">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-[#5C5A55] mb-3">
+            Item Pricing
+          </div>
 
-      <div className={`${row2} mt-3`}>
-        <div>
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalListPrice")} *</label>
-          <input className={inp} type="number" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="0.00" />
-          {errors.price ? <p className="mt-1 text-xs text-red-500">{errors.price}</p> : null}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+              <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalFormat")}</label>
+              <input className={inp} value={format} onChange={(e) => setFormat(e.target.value)} placeholder="Print / Digital / PPT..." />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalListPrice")} *</label>
+              <div className="flex gap-1">
+                <select className={`${inp} w-[70px] px-1`} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                  <option value="AED">AED</option>
+                  <option value="SAR">SAR</option>
+                  <option value="USD">USD</option>
+                </select>
+                <input className={inp} type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
+              </div>
+              {errors.price ? <p className="mt-1 text-xs text-red-500">{errors.price}</p> : null}
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalPriceUnit")} *</label>
+              <CreatableSelect
+                value={priceUnit}
+                onChange={setPriceUnit}
+                options={PRICE_UNITS}
+                placeholder="— None —"
+                addLabel="+ Add custom unit"
+              />
+            </div>
+            <div>
+              <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalIsbn")}</label>
+              <input className={inp} value={form.isbn} onChange={(e) => set("isbn", e.target.value)} placeholder="978-X-XXX-XXXXX-X" />
+            </div>
+          </div>
         </div>
-        <div>
-          <label className={lbl}>{t("admin.pages.catalogueFolder.bookModalPriceUnit")} *</label>
-          <select className={inp} value={form.priceUnit} onChange={(e) => set("priceUnit", e.target.value)}>
-            <option>/ student</option><option>/ licence</option><option>/ title</option>
-            <option>/ set</option><option>/ bundle</option><option>/ classroom</option>
-          </select>
-        </div>
-      </div>
+      )}
 
       <div className={`${row2} mt-3`}>
         <div>

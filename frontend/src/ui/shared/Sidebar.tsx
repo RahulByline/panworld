@@ -52,9 +52,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/app", labelKey: "nav.dashboard", icon: LayoutDashboard, group: "discover" },
-  { to: "/app/catalogue", labelKey: "nav.cmsTextbooks", icon: BookOpen, group: "discover", gate: (c) => !c.isPublisher },
-  { to: "/app/library", labelKey: "nav.libraryBooks", icon: Landmark, group: "discover", gate: (c) => !c.isPublisher },
-  { to: "/app/kits", labelKey: "nav.kits", icon: Microscope, group: "discover", gate: (c) => !c.isPublisher },
+  { to: "/app/catalogue", labelKey: "nav.catalogueAndResources", icon: BookOpen, group: "discover", gate: (c) => !c.isPublisher },
   { to: "/app/curriculum-mapping", labelKey: "nav.curriculumMapping", icon: MapIcon, group: "discover", gate: (c) => !c.isPublisher },
   { to: "/app/demo-hub", labelKey: "nav.demoHub", icon: PlayCircle, group: "discover", gate: (c) => !c.isPublisher },
   { to: "/app/wishlist", labelKey: "nav.wishlist", icon: Heart, group: "discover", gate: (c) => !c.isPublisher },

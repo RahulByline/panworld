@@ -72,7 +72,6 @@ export function CatalogueEbookPreviewModal({ open, onClose, lineItem, folderName
             title={lineItem.title}
             src={src}
             className="h-[min(78vh,720px)] w-full rounded-xl border border-[var(--pw-border,#e2e8f0)] bg-white shadow-inner"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-downloads allow-popups-to-escape-sandbox"
             referrerPolicy="no-referrer-when-downgrade"
           />
           <p className="mt-2 text-center text-[11px] leading-snug text-[var(--pw-text-muted,#64748b)]">{t("common.ebookPreviewHint")}</p>

@@ -15,6 +15,7 @@ const RESOURCE_TYPES = new Set([
   "KIT",
   "DIGITAL_LICENSE",
   "ASSESSMENT",
+  "BROCHURE",
   "OTHER",
 ]);
 
@@ -82,6 +83,7 @@ function parseCreateItem(body) {
   const title = t(body.title);
   const gradeLabel = t(body.gradeLabel);
   const price = Number(body.price);
+  const currencyCode = t(body.currencyCode || body.currency || "AED").toUpperCase();
   const priceUnit = t(body.priceUnit) || "/ student";
   const status = t(body.status) || "Draft";
   const subject = t(body.subject) || null;
@@ -102,6 +104,7 @@ function parseCreateItem(body) {
     isbn: t(body.isbn) || null,
     format: t(body.format) || "Print",
     price,
+    currencyCode,
     priceUnit,
     status,
     coverImageUrl: t(body.coverImageUrl) || null,
@@ -239,8 +242,8 @@ exports.createSeriesItem = async (req, res, next) => {
     const files = req.files || {};
     const coverFile = Array.isArray(files.coverImage) ? files.coverImage[0] : null;
     const materialFile = Array.isArray(files.materialFile) ? files.materialFile[0] : null;
-    if (coverFile) body.coverImageUrl = `${env.FILE_PUBLIC_BASE}/files/catalogue/covers/${coverFile.filename}`;
-    if (materialFile) body.materialFileUrl = `${env.FILE_PUBLIC_BASE}/files/catalogue/materials/${materialFile.filename}`;
+    if (coverFile) body.coverImageUrl = `${env.FILE_PUBLIC_BASE}/api/files/catalogue/covers/${coverFile.filename}`;
+    if (materialFile) body.materialFileUrl = `${env.FILE_PUBLIC_BASE}/api/files/catalogue/materials/${materialFile.filename}`;
 
     const input = parseCreateItem(body);
     const itemId = id("itm");
@@ -248,7 +251,7 @@ exports.createSeriesItem = async (req, res, next) => {
       `INSERT INTO catalogue_series_items (
          id, series_id, resource_type, title, subject, grade_label, internal_sku, isbn, format, list_price, currency_code,
          price_unit, status, cover_image_url, material_link_url, material_file_url, inventory_note
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AED', ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         itemId,
         seriesId,
@@ -260,6 +263,7 @@ exports.createSeriesItem = async (req, res, next) => {
         input.isbn,
         input.format,
         input.price,
+        input.currencyCode,
         input.priceUnit,
         input.status,
         input.coverImageUrl,
@@ -310,6 +314,26 @@ exports.createMarketingElement = async (req, res, next) => {
     );
 
     res.status(201).json({ ok: true, data: { marketingElement: { id: assetId } } });
+  } catch (e) {
+    next(e);
+  }
+};
+
+exports.updateSeriesStatus = async (req, res, next) => {
+  try {
+    const seriesId = t(req.params.id);
+    const status = t(req.body.status);
+    if (!seriesId) throw badRequest("Series id required");
+    if (!SERIES_STATUS.has(status)) throw badRequest("Invalid status");
+
+    const [result] = await pool.query(
+      "UPDATE catalogue_series SET status = ?, updated_by_user_id = ? WHERE id = ?",
+      [status, req.user.id, seriesId],
+    );
+
+    if (result.affectedRows === 0) throw notFound("Series not found");
+
+    res.json({ ok: true, message: `Series status updated to ${status}` });
   } catch (e) {
     next(e);
   }

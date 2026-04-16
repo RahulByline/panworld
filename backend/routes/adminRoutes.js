@@ -94,7 +94,7 @@ const catalogueStorage = multer.diskStorage({
 
 const uploadCatalogueItemAssets = multer({
   storage: catalogueStorage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 500 * 1024 * 1024 }, // increased from 20MB to 500MB
 });
 
 function maybeCatalogueItemAssetsUpload(req, res, next) {
@@ -137,6 +137,9 @@ router.get("/catalogue/series/:id", (req, res, next) => adminCatalogueController
 router.post("/catalogue/series", (req, res, next) => adminCatalogueController.createSeries(req, res, next));
 router.post("/catalogue/series/:id/items", maybeCatalogueItemAssetsUpload, (req, res, next) =>
   adminCatalogueController.createSeriesItem(req, res, next),
+);
+router.patch("/catalogue/series/:id/status", (req, res, next) =>
+  adminCatalogueController.updateSeriesStatus(req, res, next),
 );
 router.post("/catalogue/series/:id/marketing-elements", (req, res, next) =>
   adminCatalogueController.createMarketingElement(req, res, next),

@@ -5,6 +5,7 @@ import { AdminModal } from "../AdminModal";
 import { Button } from "../../../components/Button";
 import { inp, lbl, sec, row2, row3 } from "../formStyles";
 import type { CatalogueProductRow } from "../../../../data/admin/catalogue";
+import Editor from "react-simple-wysiwyg";
 
 const section = sec;
 function Toggle({ label: text, defaultOn }: { label: string; defaultOn?: boolean }) {
@@ -111,17 +112,56 @@ type TextbookModalProps = ModalBase & {
   onCreateSeries?: (input: TextbookSeriesCreateInput) => Promise<void>;
 };
 
-const GRADES = ["KG1", "KG2", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12"];
+const GRADES = ["", "KG Level 1", "KG Level 2", "KG Level 3", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 const PUBLISHERS = ["McGraw Hill", "Kodeit Global", "StudySync", "Oxford", "Cambridge", "Pearson", "Jolly Phonics"];
+const SUBJECTS = ["Science", "Mathematics", "English / ELA", "Social Sciences", "ICT", "Arabic", "Islamic Studies"];
+
+function CreatableSelect({ value, onChange, options, placeholder, addLabel }: { value: string, onChange: (v: string) => void, options: string[], placeholder?: string, addLabel: string }) {
+  const [isCustom, setIsCustom] = useState(() => !options.includes(value) && value !== "");
+  
+  if (isCustom) {
+    return (
+      <div className="flex w-full items-center gap-2">
+        <input 
+          className={inp} 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)} 
+          placeholder={placeholder}
+          autoFocus
+        />
+        <button type="button" className="shrink-0 text-[11px] font-semibold text-[#5C5A55] hover:text-red-500" onClick={() => { setIsCustom(false); onChange(""); }}>Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <select 
+       className={inp} 
+       value={options.includes(value) ? value : ""} 
+       onChange={(e) => {
+         if (e.target.value === "__ADD_NEW__") {
+           setIsCustom(true);
+           onChange("");
+         } else {
+           onChange(e.target.value);
+         }
+       }}
+    >
+      <option value="">{placeholder || "Select..."}</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      <option value="__ADD_NEW__" className="font-semibold text-[#0A3D62]">{addLabel}</option>
+    </select>
+  );
+}
 
 const emptyCatalogue = () => ({
   name: "",
   publisher: "",
-  subject: "Science",
-  gradeFrom: "G1",
-  gradeTo: "G6",
-  format: "Print",
-  curriculum: "American (US Common Core/NGSS)",
+  subject: "",
+  gradeFrom: "",
+  gradeTo: "",
+  format: "",
+  curriculum: "",
   description: "",
   status: "Published" as "Published" | "Draft",
 });
@@ -150,7 +190,7 @@ export function CatalogueModal({ open, onClose, onSaved, mode: _mode, onAdd }: T
   function submit(asDraft: boolean) {
     if (!validate()) return;
     const id = `tb-${Date.now()}`;
-    const grades = form.gradeFrom === form.gradeTo ? form.gradeFrom : `${form.gradeFrom}–${form.gradeTo}`;
+    const grades = (!form.gradeFrom && !form.gradeTo) ? "" : form.gradeFrom === form.gradeTo ? form.gradeFrom : `${form.gradeFrom}–${form.gradeTo}`;
     const newRow: CatalogueProductRow = {
       id,
       name: form.name.trim(),
@@ -277,22 +317,20 @@ const emptyTextbook = () => ({
   seriesName: "",
   fullTitle: "",
   edition: "",
-  format: "Print",
-  curriculum: "American (US Common Core/NGSS)",
-  subject: "Science",
-  gradeFrom: "G1",
-  gradeTo: "G6",
+  format: "",
+  curriculum: "",
+  subject: "",
+  gradeMode: "single" as "single" | "range",
+  singleGrade: "",
+  gradeFrom: "",
+  gradeTo: "",
   description: "",
-  toc: "",
   badgeNewEd: false,
   badgeNcc: false,
   badgeKodeit: false,
   badgeMaarif: false,
   territoryUae: true,
   territoryKsa: true,
-  brochureUrl: "",
-  demoUrl: "",
-  curriculumMapUrl: "",
   status: "Published" as "Published" | "Draft",
 });
 
@@ -306,7 +344,13 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
   }, [open]);
 
   function set<K extends keyof ReturnType<typeof emptyTextbook>>(k: K, v: ReturnType<typeof emptyTextbook>[K]) {
-    setForm((p) => ({ ...p, [k]: v }));
+    setForm((p) => {
+      const next = { ...p, [k]: v };
+      if (k === "publisher" && v === "Kodeit Global") {
+        next.badgeKodeit = true;
+      }
+      return next;
+    });
     setErrors((p) => ({ ...p, [k]: "" }));
   }
 
@@ -316,6 +360,8 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
     if (!form.seriesName.trim()) e.seriesName = "Required";
     if (!form.fullTitle.trim()) e.fullTitle = "Required";
     if (!form.description.trim()) e.description = "Required";
+    if (form.gradeMode === "single" && !form.singleGrade) e.grades = "Required";
+    if (form.gradeMode === "range" && !form.gradeFrom && !form.gradeTo) e.grades = "Required";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -323,7 +369,7 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
   async function submit(asDraft: boolean) {
     if (!validate()) return;
     const id = `tb-${Date.now()}`;
-    const grades = form.gradeFrom === form.gradeTo ? form.gradeFrom : `${form.gradeFrom}–${form.gradeTo}`;
+    const grades = form.gradeMode === "single" ? form.singleGrade : (!form.gradeFrom && !form.gradeTo) ? "" : form.gradeFrom === form.gradeTo ? form.gradeFrom : `${form.gradeFrom}–${form.gradeTo}`;
     const badges: string[] = [];
     if (form.badgeNewEd) badges.push("New Ed.");
     if (form.badgeNcc) badges.push("NCC");
@@ -356,29 +402,14 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
           format: form.format,
           curriculum: form.curriculum,
           subject: form.subject,
-          gradeFrom: form.gradeFrom,
-          gradeTo: form.gradeTo,
+          gradeFrom: form.gradeMode === "single" ? form.singleGrade : form.gradeFrom,
+          gradeTo: form.gradeMode === "single" ? form.singleGrade : form.gradeTo,
           description: form.description.trim(),
           detailLine: form.description.trim().slice(0, 80),
           status: asDraft ? "Draft" : "Published",
           badges,
           territories: [form.territoryUae ? "UAE" : "", form.territoryKsa ? "KSA" : ""].filter(Boolean),
-          marketingElements: [
-            form.brochureUrl.trim()
-              ? ({ assetType: "BROCHURE", title: "Series brochure", assetUrl: form.brochureUrl.trim(), audienceStage: "PRE_SALES" } as const)
-              : null,
-            form.demoUrl.trim()
-              ? ({ assetType: "DEMO", title: "Demo link", assetUrl: form.demoUrl.trim(), audienceStage: "PRE_SALES" } as const)
-              : null,
-            form.curriculumMapUrl.trim()
-              ? ({
-                  assetType: "CURRICULUM_MAP",
-                  title: "Curriculum mapping",
-                  assetUrl: form.curriculumMapUrl.trim(),
-                  audienceStage: "BOTH",
-                } as const)
-              : null,
-          ].filter((x): x is NonNullable<typeof x> => Boolean(x)),
+          marketingElements: [],
         });
       } else {
         onAdd?.(newRow);
@@ -435,9 +466,9 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
           <input className={inp} value={form.edition} onChange={(e) => set("edition", e.target.value)} placeholder="2025 Edition" />
         </div>
         <div>
-          <label className={lbl}>{t("admin.catalogueModals.format")} *</label>
+          <label className={lbl}>{t("admin.catalogueModals.format")}</label>
           <select className={inp} value={form.format} onChange={(e) => set("format", e.target.value)}>
-            <option>Print</option><option>Digital</option><option>Blended</option>
+            <option value="">— Select format —</option><option>Print</option><option>Digital</option><option>Blended</option>
           </select>
         </div>
       </div>
@@ -445,34 +476,59 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
       <div className={section}>{t("admin.catalogueModals.sectionCurriculum")}</div>
       <div className={row2}>
         <div>
-          <label className={lbl}>{t("admin.catalogueModals.curriculumType")} *</label>
+          <label className={lbl}>{t("admin.catalogueModals.curriculumType")}</label>
           <select className={inp} value={form.curriculum} onChange={(e) => set("curriculum", e.target.value)}>
+            <option value="">— Select curriculum —</option>
             <option>American (US Common Core/NGSS)</option>
             <option>British (Cambridge/UK)</option>
             <option>IB</option><option>UAE MOE</option><option>Saudi NCC</option>
           </select>
         </div>
         <div>
-          <label className={lbl}>{t("admin.catalogueModals.subject")} *</label>
-          <select className={inp} value={form.subject} onChange={(e) => set("subject", e.target.value)}>
-            <option>Science</option><option>Mathematics</option><option>English / ELA</option>
-            <option>Social Sciences</option><option>ICT</option>
-          </select>
+          <label className={lbl}>{t("admin.catalogueModals.subject")}</label>
+          <CreatableSelect 
+            value={form.subject} 
+            onChange={(v) => set("subject", v)} 
+            options={SUBJECTS} 
+            placeholder={t("admin.catalogueModals.selectSubject")} 
+            addLabel="+ Add Subject" 
+          />
         </div>
       </div>
-      <div className={`${row2} mt-4`}>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.gradeFrom")} *</label>
-          <select className={inp} value={form.gradeFrom} onChange={(e) => set("gradeFrom", e.target.value)}>
-            {GRADES.map((g) => <option key={g}>{g}</option>)}
-          </select>
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className={lbl}>{t("admin.catalogueModals.gradeRange")} *</label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 text-xs text-[#5C5A55] cursor-pointer">
+              <input type="radio" className="text-[#0A3D62]" checked={form.gradeMode === "single"} onChange={() => set("gradeMode", "single")} /> {t("admin.catalogueModals.singleGrade")}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-[#5C5A55] cursor-pointer">
+              <input type="radio" className="text-[#0A3D62]" checked={form.gradeMode === "range"} onChange={() => set("gradeMode", "range")} /> {t("admin.catalogueModals.gradeModeRange")}
+            </label>
+          </div>
         </div>
-        <div>
-          <label className={lbl}>{t("admin.catalogueModals.gradeTo")} *</label>
-          <select className={inp} value={form.gradeTo} onChange={(e) => set("gradeTo", e.target.value)}>
-            {GRADES.map((g) => <option key={g}>{g}</option>)}
+        
+        {form.gradeMode === "single" ? (
+          <select className={inp} value={form.singleGrade} onChange={(e) => set("singleGrade", e.target.value)}>
+            {GRADES.map((g) => <option key={g} value={g}>{g === "" ? t("admin.catalogueModals.selectGrade") : g}</option>)}
           </select>
-        </div>
+        ) : (
+          <div className={`${row2}`}>
+            <div>
+              <label className="mb-1 block text-[11px] text-[#9A9890]">{t("admin.catalogueModals.gradeFrom")}</label>
+              <select className={inp} value={form.gradeFrom} onChange={(e) => set("gradeFrom", e.target.value)}>
+                {GRADES.map((g) => <option key={g} value={g}>{g === "" ? t("admin.catalogueModals.selectGrade") : g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-[#9A9890]">{t("admin.catalogueModals.gradeTo")}</label>
+              <select className={inp} value={form.gradeTo} onChange={(e) => set("gradeTo", e.target.value)}>
+                {GRADES.map((g) => <option key={g} value={g}>{g === "" ? t("admin.catalogueModals.selectGrade") : g}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+        {errors.grades ? <p className="mt-1 text-xs text-red-500">{errors.grades}</p> : null}
       </div>
 
       <div className={section}>{t("admin.catalogueModals.sectionBadges")}</div>
@@ -488,33 +544,17 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
       <div className={section}>{t("admin.catalogueModals.sectionContent")}</div>
       <div>
         <label className={lbl}>{t("admin.catalogueModals.description")} *</label>
-        <textarea className={`${inp} min-h-[88px]`} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder={t("admin.catalogueModals.descriptionPh")} />
-        {errors.description ? <p className="mt-1 text-xs text-red-500">{errors.description}</p> : null}
-      </div>
-      <div className="mt-4">
-        <label className={lbl}>{t("admin.catalogueModals.toc")}</label>
-        <textarea className={`${inp} min-h-[72px]`} value={form.toc} onChange={(e) => set("toc", e.target.value)} placeholder={t("admin.catalogueModals.tocPh")} />
+        <div className="mt-1 bg-white">
+          <Editor containerProps={{ style: { height: '160px', overflowY: 'auto' } }} value={form.description} onChange={(e) => set("description", e.target.value)} />
+        </div>
+        {errors.description ? <p className="mt-2 text-xs text-red-500">{errors.description}</p> : null}
       </div>
 
-      <div className={section}>{t("admin.catalogueModals.sectionMedia")}</div>
+      <div className={`${section} mt-14`}>{t("admin.catalogueModals.sectionMedia")}</div>
       <p className="mb-2 text-[12px] text-[#5C5A55]">{t("admin.catalogueModals.folderMediaHint")}</p>
       <div>
         <label className={lbl}>{t("admin.catalogueModals.folderListingImage")}</label>
         <UploadZone icon="🖼" title={t("admin.catalogueModals.uploadFolderCover")} sub="PNG, JPG · optional · folder card in catalogue" />
-      </div>
-      <div className={`${row2} mt-3`}>
-        <div>
-          <label className={lbl}>Brochure URL (pre-sales)</label>
-          <input className={inp} value={form.brochureUrl} onChange={(e) => set("brochureUrl", e.target.value)} placeholder="https://..." />
-        </div>
-        <div>
-          <label className={lbl}>Demo URL (pre-sales)</label>
-          <input className={inp} value={form.demoUrl} onChange={(e) => set("demoUrl", e.target.value)} placeholder="https://..." />
-        </div>
-      </div>
-      <div className="mt-3">
-        <label className={lbl}>Curriculum map URL (marketing/support)</label>
-        <input className={inp} value={form.curriculumMapUrl} onChange={(e) => set("curriculumMapUrl", e.target.value)} placeholder="https://..." />
       </div>
 
       <div className={section}>{t("admin.catalogueModals.sectionTerritory")}</div>
@@ -716,8 +756,8 @@ export function KitCatalogueModal({ open, onClose, onSaved, mode }: ModalBase & 
         <div>
           <label className={lbl}>{t("admin.catalogueModals.gradeLevel")} *</label>
           <select className={inp}>
-            {["KG1", "KG2", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"].map((g) => (
-              <option key={g}>{g}</option>
+            {GRADES.map((g) => (
+              <option key={g} value={g}>{g === "" ? "— Select grade —" : g}</option>
             ))}
           </select>
         </div>

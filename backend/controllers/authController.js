@@ -95,7 +95,7 @@ exports.login = async (req, res, next) => {
       sameSite: "lax",
       secure: env.NODE_ENV === "production",
       maxAge: env.JWT_REFRESH_TTL_SECONDS * 1000,
-      path: "/api/auth",
+      path: "/",
     });
 
     res.json({
@@ -187,7 +187,7 @@ exports.logout = async (req, res, next) => {
         /* ignore */
       }
     }
-    res.clearCookie("pw_refresh", { path: "/api/auth" });
+    res.clearCookie("pw_refresh", { path: "/" });
     res.json({ ok: true });
   } catch (e) {
     next(e);

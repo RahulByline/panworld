@@ -68,7 +68,7 @@ const LINE_ITEM_COVER_PLACEHOLDER_POOL: readonly string[] = [
   "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=280&h=360&fit=crop&q=82",
   "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=280&h=360&fit=crop&q=82",
   "https://images.unsplash.com/photo-1590412701565-55de7fad7cab?w=280&h=360&fit=crop&q=82",
-  "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=280&h=360&fit=crop&q=82",
+  "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=280&h=360&fit=crop&q=82",
   "https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=280&h=360&fit=crop&q=82",
   "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=280&h=360&fit=crop&q=82",
   "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=280&h=360&fit=crop&q=82",
