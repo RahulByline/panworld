@@ -25,6 +25,7 @@ import {
   TB_STATUS_OPTIONS,
 } from "../../../data/admin/catalogueFilterConfig";
 import { cn } from "../../utils/cn";
+import { stripHtml, truncate } from "../../utils/text";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
 import { api } from "../../../services/api";
 import {
@@ -88,18 +89,29 @@ type ApiSeriesItem = {
   priceUnit: string;
   status: CatalogueLineItem["status"];
   coverImageUrl?: string | null;
+  materialLinkUrl?: string | null;
+  materialFileUrl?: string | null;
 };
 
 function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingCount = 0): CatalogueProductRow {
+  function fixUrl(url?: string | null) {
+    if (!url) return undefined;
+    if (url.includes("/files/") && !url.includes("/api/files/")) {
+      return url.replace("/files/", "/api/files/");
+    }
+    return url;
+  }
+
   const lineItems: CatalogueLineItem[] = items.map((it) => ({
     id: it.id,
-    title: it.resourceType ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
+    title: it.resourceType && it.resourceType !== "BROCHURE" ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
     gradeLabel: it.gradeLabel,
     isbn: it.isbn || undefined,
-    price: `AED ${Number(it.listPrice)}`,
-    priceUnit: it.priceUnit,
+    price: it.resourceType === "BROCHURE" ? "Free" : `AED ${Number(it.listPrice)}`,
+    priceUnit: it.resourceType === "BROCHURE" ? "" : it.priceUnit,
     status: it.status,
-    coverImageUrl: it.coverImageUrl || undefined,
+    coverImageUrl: fixUrl(it.coverImageUrl) || undefined,
+    ebookPreviewUrl: fixUrl(it.materialFileUrl) || fixUrl(it.materialLinkUrl) || undefined,
   }));
   const min = items.length ? Math.min(...items.map((x) => Number(x.listPrice))) : null;
   return {
@@ -288,17 +300,40 @@ export function AdminCatalogueSegmentPage() {
       if (input.isbn) fd.append("isbn", input.isbn);
       fd.append("format", input.format);
       fd.append("price", String(input.price));
+      fd.append("currencyCode", input.currency);
       fd.append("priceUnit", input.priceUnit);
       fd.append("status", input.status);
       if (input.materialLinkUrl) fd.append("materialLinkUrl", input.materialLinkUrl);
       if (input.inventoryNote) fd.append("inventoryNote", input.inventoryNote);
-      if (input.coverImageFile) fd.append("coverImage", input.coverImageFile);
+       if (input.coverImageFile) fd.append("coverImage", input.coverImageFile);
       if (input.materialFile) fd.append("materialFile", input.materialFile);
-      await api.post(`admin/catalogue/series/${currentFolderId}/items`, fd);
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, fd, {
+        onUploadProgress: (ev) => {
+          if (ev.total) input.onProgress?.(Math.round((ev.loaded * 100) / ev.total));
+        },
+      });
     } else {
-      await api.post(`admin/catalogue/series/${currentFolderId}/items`, input);
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, {
+        ...input,
+        currencyCode: input.currency,
+      }, {
+        onUploadProgress: (ev) => {
+          if (ev.total) input.onProgress?.(Math.round((ev.loaded * 100) / ev.total));
+        },
+      });
     }
     await loadTextbookSeries();
+  }
+
+  async function handleUpdateSeriesStatus(id: string, status: CatalogueProductRow["status"], msg: string) {
+    try {
+      await api.patch(`admin/catalogue/series/${id}/status`, { status });
+      show(msg);
+      await loadTextbookSeries();
+    } catch (err: any) {
+      console.error(err);
+      show("Failed to update series status.");
+    }
   }
 
   const filtered = useMemo(() => {
@@ -424,6 +459,7 @@ export function AdminCatalogueSegmentPage() {
           onClose={() => setBookModalOpen(false)}
           onSaved={show}
           mode="add"
+          category={tab}
           onAdd={handleAddLineItem}
           onCreateItem={tab === "textbooks" ? handleCreateSeriesItem : undefined}
         />
@@ -641,8 +677,8 @@ export function AdminCatalogueSegmentPage() {
                     <td className="px-4 py-3">{p.publisher}</td>
                     <td className="px-4 py-3">{p.grades}</td>
                     <td className="px-4 py-3">{p.format}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-[#5C5A55]" title={p.detailLine}>
-                      {p.detailLine}
+                    <td className="max-w-[200px] truncate px-4 py-3 text-[#5C5A55]" title={stripHtml(p.detailLine)}>
+                      {truncate(stripHtml(p.detailLine), 100)}
                     </td>
                     <td className="px-4 py-3 font-medium">
                       {p.lineItems.length > 0 ? p.folderPriceLabel : `${p.price}${p.priceUnit ?? ""}`}
@@ -667,6 +703,26 @@ export function AdminCatalogueSegmentPage() {
                         <Button type="button" size="sm" className="bg-[#0A3D62] text-white hover:bg-[#071E36]" onClick={() => setEditOpen(true)}>
                           {t("common.edit")}
                         </Button>
+                        {p.status === "Draft" ? (
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            className="bg-emerald-600 text-white hover:bg-emerald-700" 
+                            onClick={() => handleUpdateSeriesStatus(p.id, "Published", t("admin.pages.catalogueSegment.published"))}
+                          >
+                            {t("admin.pages.catalogueSegment.publish")}
+                          </Button>
+                        ) : p.status === "Published" ? (
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="secondary"
+                            className="bg-stone-100 text-[#5C5A55] hover:bg-stone-200" 
+                            onClick={() => handleUpdateSeriesStatus(p.id, "Archived", t("admin.pages.catalogueSegment.archived"))}
+                          >
+                            {t("admin.pages.catalogueSegment.archive")}
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -685,8 +741,8 @@ export function AdminCatalogueSegmentPage() {
               t={t}
               onOpenFolder={() => openFolder(p.id)}
               onEdit={() => setEditOpen(true)}
-              onArchive={() => show(t("admin.pages.catalogueSegment.archived"))}
-              onPublish={() => show(t("admin.pages.catalogueSegment.published"))}
+              onArchive={() => handleUpdateSeriesStatus(p.id, "Archived", t("admin.pages.catalogueSegment.archived"))}
+              onPublish={() => handleUpdateSeriesStatus(p.id, "Published", t("admin.pages.catalogueSegment.published"))}
             />
           ))}
         </div>

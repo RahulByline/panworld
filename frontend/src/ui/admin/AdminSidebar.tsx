@@ -39,9 +39,7 @@ const OVERVIEW: NavItem[] = [
 ];
 
 const CATALOG: NavItem[] = [
-  { to: "/admin/cms/textbooks", labelKey: "admin.nav.cmsTextbooks", icon: BookOpen },
-  { to: "/admin/cms/library", labelKey: "admin.nav.cmsLibrary", icon: Library },
-  { to: "/admin/cms/kits", labelKey: "admin.nav.cmsKits", icon: Package },
+  { to: "/admin/cms/textbooks", labelKey: "admin.nav.catalogueAndResources", icon: BookOpen },
   { to: "/admin/cms/publisher-access", labelKey: "admin.nav.publisherAccess", icon: KeyRound },
   { to: "/admin/cms/resources", labelKey: "admin.nav.cmsResources", icon: FolderOpen },
   { to: "/admin/cms/announcements", labelKey: "admin.nav.cmsAnnouncements", icon: Megaphone },
