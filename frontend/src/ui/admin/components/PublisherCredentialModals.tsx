@@ -161,10 +161,11 @@ export function PublisherAssignSchoolModal({ open, onClose, credentialId, produc
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilter("");
       setSelectedId(null);
     }
-  }, [open, credentialId, productTitle]);
+  }, [open]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();

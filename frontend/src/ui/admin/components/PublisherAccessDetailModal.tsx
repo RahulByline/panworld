@@ -121,6 +121,7 @@ export function PublisherAccessDetailModal({ open, onClose, row, t }: Props) {
 
   useEffect(() => {
     if (open && row) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQ("");
       setTerritory("all");
       setShareStatus("all");
@@ -132,7 +133,7 @@ export function PublisherAccessDetailModal({ open, onClose, row, t }: Props) {
         })),
       );
     }
-  }, [open, row?.id]);
+  }, [open, row]);
 
   const setShareAccessEnabled = useCallback((schoolId: string, enabled: boolean) => {
     setLocalShares((prev) =>

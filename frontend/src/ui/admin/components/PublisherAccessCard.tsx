@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { BookOpen } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "../../utils/cn";
 import type { PublisherAccessRow } from "../../../data/admin/publisherAccess";
 
@@ -12,9 +12,7 @@ function PublisherCardLogo({
   ourBrand?: boolean;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  useEffect(() => {
-    setImgFailed(false);
-  }, [publisherLogoUrl]);
+
   const showImg = Boolean(publisherLogoUrl) && !imgFailed;
 
   return (
@@ -27,6 +25,7 @@ function PublisherCardLogo({
     >
       {showImg ? (
         <img
+          key={publisherLogoUrl}
           src={publisherLogoUrl}
           alt=""
           loading="lazy"

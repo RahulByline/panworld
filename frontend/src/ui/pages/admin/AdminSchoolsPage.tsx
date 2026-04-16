@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Eye, Pencil, Plus, UserPlus, X } from "lucide-react";
+import { Pencil, Plus, UserPlus, X, Trash2, Search, Filter } from "lucide-react";
 import { Card } from "../../components/Card";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { api } from "../../../services/api";
-import { AssignProductsToSchoolModal } from "../../admin/components/AssignProductsToSchoolModal";
-import { SchoolViewModal } from "../../admin/components/SchoolViewModal";
-import { useAdminToast } from "../../admin/hooks/useAdminToast";
-import { ASSIGNABLE_PRODUCTS, DEFAULT_ASSIGNED_PRODUCT_IDS } from "../../../data/admin/assignableCatalogue";
 
 const WHATSAPP_RE = /^[\d+()[\]\s\-]{8,40}$/;
 
@@ -38,11 +34,6 @@ const SchoolProfileSchema = z.object({
   postalCode: z.string().trim().optional(),
   phone: z.string().trim().optional(),
   website: z.string().trim().optional(),
-  logoUrl: z
-    .string()
-    .trim()
-    .optional()
-    .refine((s) => !s || z.string().url().safeParse(s).success, "Invalid URL"),
 });
 
 const CreateSchoolSchema = SchoolProfileSchema.extend({
@@ -82,6 +73,10 @@ type SchoolRow = {
   preferredLang: string;
   purchaseStatus: string;
   createdAt: string;
+  logoUrl?: string;
+  schoolEmail?: string;
+  whatsapp?: string;
+  city?: string;
 };
 
 type SchoolDetail = SchoolProfileValues & { id: string; createdAt?: string };
@@ -121,7 +116,6 @@ const defaultProfileValues: SchoolProfileValues = {
   postalCode: "",
   phone: "",
   website: "",
-  logoUrl: "",
 };
 
 const defaultCreateValues: CreateFormValues = {
@@ -136,10 +130,11 @@ const defaultCreateValues: CreateFormValues = {
 export function AdminSchoolsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { show, Toast } = useAdminToast();
   const [schools, setSchools] = useState<SchoolRow[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [banner, setBanner] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "trial" | "inactive">("all");
 
   const [groups, setGroups] = useState<SchoolGroupRow[]>([]);
   const [curricula, setCurricula] = useState<CurriculumRow[]>([]);
@@ -166,44 +161,6 @@ export function AdminSchoolsPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [viewOpen, setViewOpen] = useState(false);
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const [assignProductsOpen, setAssignProductsOpen] = useState(false);
-  const [schoolProductAssignments, setSchoolProductAssignments] = useState<Record<string, string[]>>({});
-
-  const getAssignments = useCallback(
-    (sid: string) => {
-      if (!sid) return [];
-      const saved = schoolProductAssignments[sid];
-      if (saved) return saved;
-      return [...DEFAULT_ASSIGNED_PRODUCT_IDS];
-    },
-    [schoolProductAssignments],
-  );
-
-  const accountManagerLabel = useCallback(
-    (sid: string) => {
-      const row = schools.find((s) => s.id === sid);
-      if (!row) return "—";
-      const c = (row.country || "").toUpperCase();
-      if (c === "UAE" || c.includes("AE") || c.includes("EMIRATES")) return "Rania Khalil (UAE)";
-      if (c === "SA" || c.includes("SAUDI") || c === "KSA") return "Omar Hassan (KSA)";
-      return "Panworld AM (Regional)";
-    },
-    [schools],
-  );
-
-  const viewingSchool = useMemo(
-    () => (viewingId ? (schools.find((s) => s.id === viewingId) ?? null) : null),
-    [viewingId, schools],
-  );
-
-  const assignedForViewSchool = useMemo(() => {
-    if (!viewingId) return [];
-    return getAssignments(viewingId)
-      .map((id) => ASSIGNABLE_PRODUCTS.find((p) => p.id === id))
-      .filter((p): p is (typeof ASSIGNABLE_PRODUCTS)[number] => !!p);
-  }, [viewingId, getAssignments]);
 
   const createForm = useForm<CreateFormValues>({
     resolver: zodResolver(CreateSchoolSchema) as any,
@@ -239,9 +196,26 @@ export function AdminSchoolsPage() {
   async function loadSchools() {
     setLoadingList(true);
     try {
-      const res = await api.get<{ ok: boolean; data: { schools: SchoolRow[] } }>("admin/schools");
-      if (res.data?.ok) setSchools(res.data.data.schools);
-    } catch {
+      const res = await api.get<{ ok: boolean; data: { schools: any[] } }>("admin/schools");
+      if (res.data?.ok) {
+        // Transform the API response to include logoUrl field
+        const transformedSchools = res.data.data.schools.map((school: any) => ({
+          id: school.id,
+          name: school.name,
+          country: school.country,
+          curriculumType: school.curriculumType,
+          preferredLang: school.preferredLang,
+          purchaseStatus: school.purchaseStatus || 'active',
+          createdAt: school.createdAt,
+          logoUrl: school.logoUrl || school.logo_url, // Handle both naming conventions
+          schoolEmail: school.schoolEmail || school.school_email,
+          whatsapp: school.whatsapp,
+          city: school.city,
+        }));
+        setSchools(transformedSchools);
+      }
+    } catch (error) {
+      console.error("Failed to load schools:", error);
       setSchools([]);
     } finally {
       setLoadingList(false);
@@ -287,6 +261,12 @@ export function AdminSchoolsPage() {
     void loadCurricula();
     void loadCountries();
   }, []);
+
+  const filteredSchools = schools.filter((s) => {
+    const matchesSearch = searchTerm === "" || s.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || s.purchaseStatus === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   function openRefModal(type: "curriculum" | "group" | "country", target: "create" | "edit") {
     setRefName("");
@@ -403,7 +383,6 @@ export function AdminSchoolsPage() {
           schoolEmail: s.schoolEmail ?? "",
           whatsapp: s.whatsapp ?? "",
           website: s.website ?? "",
-          logoUrl: s.logoUrl ?? "",
         });
         setLogoFileEdit(null);
         void loadSchoolUsers(editingId);
@@ -443,7 +422,6 @@ export function AdminSchoolsPage() {
         schoolEmail: values.schoolEmail.trim(),
         whatsapp: values.whatsapp.trim(),
         website: values.website?.trim() || null,
-        logoUrl: logoFileCreate ? null : values.logoUrl?.trim() || null,
         adminEmail: values.adminEmail.trim(),
         adminPassword: values.adminPassword,
         adminFirstName: values.adminFirstName.trim(),
@@ -469,7 +447,6 @@ export function AdminSchoolsPage() {
         fd.append("schoolEmail", payload.schoolEmail);
         fd.append("whatsapp", payload.whatsapp);
         appendIf(fd, "website", payload.website);
-        if (payload.logoUrl) appendIf(fd, "logoUrl", payload.logoUrl);
         fd.append("adminEmail", payload.adminEmail);
         fd.append("adminPassword", payload.adminPassword);
         fd.append("adminFirstName", payload.adminFirstName);
@@ -532,7 +509,6 @@ export function AdminSchoolsPage() {
         schoolEmail: values.schoolEmail.trim(),
         whatsapp: values.whatsapp.trim(),
         website: values.website?.trim() || null,
-        logoUrl: logoFileEdit ? null : values.logoUrl?.trim() || null,
       };
 
       let res;
@@ -553,7 +529,6 @@ export function AdminSchoolsPage() {
         fd.append("schoolEmail", payload.schoolEmail);
         fd.append("whatsapp", payload.whatsapp);
         appendIf(fd, "website", payload.website);
-        if (payload.logoUrl) appendIf(fd, "logoUrl", payload.logoUrl);
         fd.append("logo", logoFileEdit);
         res = await api.patch(`admin/schools/${editingId}`, fd);
       } else {
@@ -628,17 +603,6 @@ export function AdminSchoolsPage() {
     }
   }
 
-  function openView(id: string) {
-    setViewingId(id);
-    setViewOpen(true);
-  }
-
-  function closeView() {
-    setViewOpen(false);
-    setViewingId(null);
-    setAssignProductsOpen(false);
-  }
-
   function openEdit(id: string) {
     setEditingId(id);
     setEditOpen(true);
@@ -660,6 +624,26 @@ export function AdminSchoolsPage() {
     editForm.reset(defaultProfileValues);
   }
 
+  async function deleteSchool(id: string, name: string) {
+    if (!window.confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const res = await api.delete(`admin/schools/${id}`);
+      if (res.data?.ok) {
+        setBanner({ type: "ok", text: `School "${name}" deleted successfully` });
+        void loadSchools();
+      }
+    } catch (e) {
+      let text = "Failed to delete school";
+      if (axios.isAxiosError(e)) {
+        const msg = (e.response?.data as { error?: { message?: string } })?.error?.message;
+        if (msg) text = msg;
+      }
+      setBanner({ type: "err", text });
+    }
+  }
+
   function startEditUser(u: SchoolUserRow) {
     setEditingUserId(u.id);
     setUserFormOpen(false);
@@ -674,10 +658,10 @@ export function AdminSchoolsPage() {
 
   return (
     <div className="space-y-6">
-      <Toast />
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-['DM_Serif_Display',serif] text-2xl text-[#1A1917]">{t("admin.schools.title")}</h1>
+          <h1 className="font-['DM_Serif_Display',serif] text-3xl text-[#1A1917]">{t("admin.schools.title")}</h1>
           <p className="mt-1 text-sm text-[#5C5A55]">{t("admin.schools.subtitle")}</p>
         </div>
         <Button
@@ -702,57 +686,197 @@ export function AdminSchoolsPage() {
         </div>
       ) : null}
 
-      <Card className="border-[#E2E0D9] p-5">
-        <h2 className="text-lg font-semibold text-[#1A1917]">{t("admin.schools.listTitle")}</h2>
-        <p className="mt-1 text-sm text-[#5C5A55]">{t("admin.schools.listHint")}</p>
-        <div className="mt-4 overflow-auto rounded-xl border border-[#E2E0D9]">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-[#E2E0D9] bg-[#F5F4F0] text-[11px] uppercase tracking-wide text-[#5C5A55]">
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-[#E2E0D9] bg-white p-5 shadow-sm">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#5C5A55]">Total Schools</div>
+          <div className="mt-2 text-3xl font-bold text-[#1A1917]">{schools.length}</div>
+          <div className="mt-1 text-xs text-[#9A9890]">All schools in system</div>
+        </div>
+        <div className="rounded-xl border border-[#E2E0D9] bg-white p-5 shadow-sm">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#5C5A55]">Active</div>
+          <div className="mt-2 text-3xl font-bold text-emerald-600">{schools.filter(s => s.purchaseStatus === 'active').length}</div>
+          <div className="mt-1 text-xs text-[#9A9890]">Currently active</div>
+        </div>
+        <div className="rounded-xl border border-[#E2E0D9] bg-white p-5 shadow-sm">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#5C5A55]">Trial</div>
+          <div className="mt-2 text-3xl font-bold text-amber-600">{schools.filter(s => s.purchaseStatus === 'trial').length}</div>
+          <div className="mt-1 text-xs text-[#9A9890]">On trial period</div>
+        </div>
+        <div className="rounded-xl border border-[#E2E0D9] bg-white p-5 shadow-sm">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#5C5A55]">Filtered</div>
+          <div className="mt-2 text-3xl font-bold text-[#0A3D62]">{filteredSchools.length}</div>
+          <div className="mt-1 text-xs text-[#9A9890]">Showing in list</div>
+        </div>
+      </div>
+
+      <Card className="border-[#E2E0D9] p-6 shadow-sm">
+        {/* Search and Filter Bar */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A9890]" />
+              <input
+                type="text"
+                placeholder="Search schools..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-lg border border-[#E2E0D9] bg-white pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A3D62] focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-[#5C5A55]" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="rounded-lg border border-[#E2E0D9] bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A3D62] focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="trial">Trial</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-auto rounded-xl border border-[#E2E0D9] shadow-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="border-b-2 border-[#E2E0D9] bg-gradient-to-b from-[#FAFAF8] to-[#F5F4F0] text-[11px] font-semibold uppercase tracking-wide text-[#5C5A55]">
               <tr>
-                <th className="px-3 py-2">{t("admin.schools.colName")}</th>
-                <th className="px-3 py-2">{t("admin.schools.colCountry")}</th>
-                <th className="px-3 py-2">{t("admin.schools.colCurriculum")}</th>
-                <th className="px-3 py-2">{t("admin.schools.colCreated")}</th>
-                <th className="px-3 py-2 text-right">{t("admin.schools.colActions")}</th>
+                <th className="px-5 py-4">School</th>
+                <th className="px-5 py-4">Location</th>
+                <th className="px-5 py-4">Curriculum</th>
+                <th className="px-5 py-4">Contact</th>
+                <th className="px-5 py-4">Language</th>
+                <th className="px-5 py-4 min-w-[140px]">Status</th>
+                <th className="px-5 py-4">Created</th>
+                <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E0D9]">
               {loadingList ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-[#9A9890]">
-                    {t("common.loading")}
+                  <td colSpan={8} className="px-4 py-12 text-center text-[#9A9890]">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0A3D62] border-t-transparent"></div>
+                      <span>{t("common.loading")}</span>
+                    </div>
                   </td>
                 </tr>
-              ) : schools.length === 0 ? (
+              ) : filteredSchools.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-[#9A9890]">
-                    {t("admin.schools.empty")}
+                  <td colSpan={8} className="px-4 py-12 text-center text-[#9A9890]">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-4xl">🏫</div>
+                      <div className="font-medium">{searchTerm || statusFilter !== "all" ? "No schools match your filters" : t("admin.schools.empty")}</div>
+                      <div className="text-sm">{searchTerm || statusFilter !== "all" ? "Try adjusting your search or filters" : "Create your first school to get started"}</div>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                schools.map((s) => (
-                  <tr key={s.id} className="hover:bg-[#FAFAF8]">
-                    <td className="px-3 py-2 font-medium text-[#1A1917]">{s.name}</td>
-                    <td className="px-3 py-2 text-[#5C5A55]">{s.country}</td>
-                    <td className="px-3 py-2 text-[#5C5A55]">{s.curriculumType}</td>
-                    <td className="px-3 py-2 text-[#9A9890]">{new Date(s.createdAt).toLocaleDateString()}</td>
-                    <td className="px-3 py-2 text-right">
+                filteredSchools.map((s) => (
+                  <tr 
+                    key={s.id} 
+                    className="group hover:bg-gradient-to-r hover:from-[#FAFAF8] hover:to-[#F5F4F0] transition-all duration-200 cursor-pointer"
+                    onClick={() => navigate(`/admin/schools/${s.id}`)}
+                  >
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#E2E0D9] bg-[#F5F4F0] shadow-sm group-hover:border-[#0A3D62] transition-colors">
+                          {s.logoUrl ? (
+                            <img 
+                              src={s.logoUrl} 
+                              alt={`${s.name} logo`} 
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`h-full w-full flex items-center justify-center text-sm font-semibold text-[#5C5A55] ${s.logoUrl ? 'hidden' : ''}`}>
+                            {s.name.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-[#1A1917] group-hover:text-[#0A3D62] transition-colors">{s.name}</div>
+                          <div className="text-xs text-[#9A9890]">ID: {s.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="text-[#5C5A55]">
+                        <div className="font-medium">{s.country}</div>
+                        {s.city && <div className="text-xs text-[#9A9890]">{s.city}</div>}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
+                        {s.curriculumType}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="text-[#5C5A55]">
+                        {s.schoolEmail && (
+                          <div className="text-xs truncate" title={s.schoolEmail}>
+                            {s.schoolEmail}
+                          </div>
+                        )}
+                        {s.whatsapp && (
+                          <div className="text-xs text-[#9A9890]">{s.whatsapp}</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700 border border-gray-200">
+                        {s.preferredLang === 'en' ? 'English' : 'Arabic'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap border ${
+                        s.purchaseStatus === 'active'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : s.purchaseStatus === 'trial'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}>
+                        {s.purchaseStatus || 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-[#5C5A55]">
+                      <div className="text-xs">
+                        {new Date(s.createdAt).toLocaleDateString()}
+                        <div className="text-[#9A9890]">
+                          {new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-right">
                       <div className="flex flex-wrap justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => openView(s.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0D9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1A1917] hover:bg-[#F5F4F0]"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          {t("admin.schools.colView")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEdit(s.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0D9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#0A3D62] hover:bg-[#F5F4F0]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(s.id);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E0D9] bg-white px-3 py-2 text-xs font-medium text-[#0A3D62] hover:border-[#0A3D62] hover:bg-[#0A3D62] hover:text-white transition-all shadow-sm"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                           {t("common.edit")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSchool(s.id, s.name);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 hover:border-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -1066,60 +1190,6 @@ export function AdminSchoolsPage() {
         </div>
       ) : null}
 
-      <SchoolViewModal
-        open={viewOpen}
-        onClose={closeView}
-        t={t}
-        school={viewingSchool}
-        accountManager={viewingId ? accountManagerLabel(viewingId) : "—"}
-        assignedProducts={assignedForViewSchool}
-        onAssignProducts={() => setAssignProductsOpen(true)}
-        onImpersonate={() => {
-          show(t("admin.schools.assignProducts.toastImpersonate"));
-          navigate("/app");
-        }}
-        onViewRfqs={() => {
-          const name = viewingSchool?.name ?? "";
-          show(t("admin.schools.assignProducts.toastRfq", { name }));
-          navigate("/admin/rfq");
-        }}
-        onViewOrders={() => {
-          const name = viewingSchool?.name ?? "";
-          show(t("admin.schools.assignProducts.toastOrders", { name }));
-          navigate("/admin/orders");
-        }}
-        onDeactivate={() => {
-          const name = viewingSchool?.name ?? "";
-          if (window.confirm(t("admin.schools.assignProducts.confirmDeactivate", { name }))) {
-            show(t("admin.schools.assignProducts.toastDeactivated"));
-          }
-        }}
-        onEdit={() => {
-          const id = viewingId;
-          closeView();
-          if (id) openEdit(id);
-        }}
-        onSaveChanges={() => {
-          show(t("admin.schools.view.savedToast"));
-          closeView();
-        }}
-      />
-
-      <AssignProductsToSchoolModal
-        open={assignProductsOpen}
-        onClose={() => setAssignProductsOpen(false)}
-        t={t}
-        schools={schools.map((s) => ({ id: s.id, name: s.name }))}
-        initialSchoolId={viewingId}
-        accountManagerLabel={accountManagerLabel}
-        getAssignments={getAssignments}
-        onSave={(sid, ids) => {
-          setSchoolProductAssignments((prev) => ({ ...prev, [sid]: ids }));
-          const name = schools.find((x) => x.id === sid)?.name ?? sid;
-          show(t("admin.schools.assignProducts.savedToast", { name }));
-        }}
-      />
-
       {refModal ? (
         <div
           className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 p-4"
@@ -1396,9 +1466,40 @@ function SchoolProfileFields({
             <p className="mt-1 text-xs text-[#9A9890]">{t("admin.schools.logoFileHint")}</p>
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-medium text-[#5C5A55]">{t("admin.schools.logoUrl")}</label>
-            <Input className="mt-1 border-[#E2E0D9]" placeholder="https://…" disabled={!!logoFile} {...form.register("logoUrl")} />
-            {fieldError(fe.logoUrl?.message)}
+            <label className="text-xs font-medium text-[#5C5A55]">Logo Preview</label>
+            <div className="mt-2 flex items-center gap-4">
+              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#E2E0D9] bg-[#F5F4F0] relative">
+                {logoFile ? (
+                  <img 
+                    src={URL.createObjectURL(logoFile)} 
+                    alt="Logo preview" 
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-sm font-medium text-[#9A9890]">
+                    {form.getValues("name")?.charAt(0).toUpperCase() || 'S'}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-[#5C5A55]">
+                  {logoFile ? (
+                    <>Preview of uploaded file: <span className="font-medium">{logoFile.name}</span></>
+                  ) : (
+                    <>Upload a logo to see the preview</>
+                  )}
+                </p>
+                {logoFile && (
+                  <button
+                    type="button"
+                    onClick={() => setLogoFile(null)}
+                    className="mt-2 text-xs text-red-600 hover:text-red-800"
+                  >
+                    Remove uploaded file
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

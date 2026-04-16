@@ -40,9 +40,7 @@ function PublisherCardLogoPanel({
   name: string;
 }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-  }, [logoUrl]);
+
   const showImg = Boolean(logoUrl) && !failed;
   const initials = publisherInitials(name);
 
@@ -53,6 +51,7 @@ function PublisherCardLogoPanel({
         style={leftPanelBackground(accent)}
       >
         <img
+          key={logoUrl}
           src={logoUrl}
           alt=""
           className="h-full w-full object-cover"
