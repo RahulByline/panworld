@@ -22,6 +22,7 @@ export type CatalogueSeriesItemCreateInput = {
   materialFile?: File;
 };
 
+
 type Props = {
   open: boolean;
   onClose: () => void;
