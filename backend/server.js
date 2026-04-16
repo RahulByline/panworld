@@ -39,6 +39,7 @@ app.use(cookieParser());
 const uploadRoot = path.resolve(env.UPLOAD_DIR);
 fs.mkdirSync(uploadRoot, { recursive: true });
 app.use("/api/files", express.static(uploadRoot)); // we will use this for the files uploaded to be stored in the backend/uploads folder
+app.use("/files", express.static(uploadRoot)); // Fallback for old records created before /api was added
 
 app.get("/api/health", (_req, res) => { //this is for testing, to check if the backend server is running on the environment
   res.json({ message: "Backend is running" });

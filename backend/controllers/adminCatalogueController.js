@@ -239,8 +239,8 @@ exports.createSeriesItem = async (req, res, next) => {
     const files = req.files || {};
     const coverFile = Array.isArray(files.coverImage) ? files.coverImage[0] : null;
     const materialFile = Array.isArray(files.materialFile) ? files.materialFile[0] : null;
-    if (coverFile) body.coverImageUrl = `${env.FILE_PUBLIC_BASE}/files/catalogue/covers/${coverFile.filename}`;
-    if (materialFile) body.materialFileUrl = `${env.FILE_PUBLIC_BASE}/files/catalogue/materials/${materialFile.filename}`;
+    if (coverFile) body.coverImageUrl = `${env.FILE_PUBLIC_BASE}/api/files/catalogue/covers/${coverFile.filename}`;
+    if (materialFile) body.materialFileUrl = `${env.FILE_PUBLIC_BASE}/api/files/catalogue/materials/${materialFile.filename}`;
 
     const input = parseCreateItem(body);
     const itemId = id("itm");

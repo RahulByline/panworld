@@ -88,9 +88,19 @@ type ApiSeriesItem = {
   priceUnit: string;
   status: CatalogueLineItem["status"];
   coverImageUrl?: string | null;
+  materialLinkUrl?: string | null;
+  materialFileUrl?: string | null;
 };
 
 function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingCount = 0): CatalogueProductRow {
+  function fixUrl(url?: string | null) {
+    if (!url) return undefined;
+    if (url.includes("/files/") && !url.includes("/api/files/")) {
+      return url.replace("/files/", "/api/files/");
+    }
+    return url;
+  }
+
   const lineItems: CatalogueLineItem[] = items.map((it) => ({
     id: it.id,
     title: it.resourceType ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
@@ -99,7 +109,8 @@ function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingC
     price: `AED ${Number(it.listPrice)}`,
     priceUnit: it.priceUnit,
     status: it.status,
-    coverImageUrl: it.coverImageUrl || undefined,
+    coverImageUrl: fixUrl(it.coverImageUrl) || undefined,
+    ebookPreviewUrl: fixUrl(it.materialFileUrl) || fixUrl(it.materialLinkUrl) || undefined,
   }));
   const min = items.length ? Math.min(...items.map((x) => Number(x.listPrice))) : null;
   return {
