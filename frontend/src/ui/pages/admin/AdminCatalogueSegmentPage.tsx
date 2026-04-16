@@ -6,7 +6,6 @@ import { Button } from "../../components/Button";
 import {
   catalogueByTab,
   catalogueHaystack,
-  getCatalogueFolder,
   type CatalogueLineItem,
   type CatalogueProductRow,
   type CatalogueTab,
@@ -27,8 +26,17 @@ import {
 } from "../../../data/admin/catalogueFilterConfig";
 import { cn } from "../../utils/cn";
 import { useAdminToast } from "../../admin/hooks/useAdminToast";
-import { KitCatalogueModal, LibraryCatalogueModal, TextbookProductModal } from "../../admin/components/catalogue/CatalogueModals";
-import { CatalogueBookItemModal } from "../../admin/components/catalogue/CatalogueBookItemModal";
+import { api } from "../../../services/api";
+import {
+  KitCatalogueModal,
+  LibraryCatalogueModal,
+  TextbookProductModal,
+  type TextbookSeriesCreateInput,
+} from "../../admin/components/catalogue/CatalogueModals";
+import {
+  CatalogueBookItemModal,
+  type CatalogueSeriesItemCreateInput,
+} from "../../admin/components/catalogue/CatalogueBookItemModal";
 import { CatalogueEbookPreviewModal } from "../../admin/components/catalogue/CatalogueEbookPreviewModal";
 import { CatalogueFolderDetailView } from "../../admin/components/catalogue/CatalogueFolderDetailView";
 import { CatalogueProductCard } from "../../admin/components/catalogue/CatalogueProductCard";
@@ -52,6 +60,72 @@ function matchesPublisher(p: CatalogueProductRow, sel: string, tab: CatalogueTab
 function matchesGradeBuckets(p: CatalogueProductRow, sel: string): boolean {
   if (sel.startsWith("All ")) return true;
   return p.gradeBuckets?.includes(sel) ?? false;
+}
+
+type ApiSeries = {
+  id: string;
+  name: string;
+  publisher: string;
+  format: string;
+  curriculumType: string;
+  subject: string;
+  gradeFrom: string;
+  gradeTo: string;
+  description: string | null;
+  detailLine: string | null;
+  status: CatalogueProductRow["status"];
+  badges: string[];
+};
+
+type ApiSeriesItem = {
+  id: string;
+  resourceType?: string;
+  title: string;
+  subject?: string | null;
+  gradeLabel: string;
+  isbn?: string | null;
+  listPrice: number;
+  priceUnit: string;
+  status: CatalogueLineItem["status"];
+  coverImageUrl?: string | null;
+};
+
+function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingCount = 0): CatalogueProductRow {
+  const lineItems: CatalogueLineItem[] = items.map((it) => ({
+    id: it.id,
+    title: it.resourceType ? `${it.title} (${it.resourceType.replaceAll("_", " ")})` : it.title,
+    gradeLabel: it.gradeLabel,
+    isbn: it.isbn || undefined,
+    price: `AED ${Number(it.listPrice)}`,
+    priceUnit: it.priceUnit,
+    status: it.status,
+    coverImageUrl: it.coverImageUrl || undefined,
+  }));
+  const min = items.length ? Math.min(...items.map((x) => Number(x.listPrice))) : null;
+  return {
+    id: series.id,
+    name: series.name,
+    publisher: series.publisher,
+    grades: `${series.gradeFrom}–${series.gradeTo}`,
+    format: series.format,
+    price: min == null ? "AED —" : `AED ${min}`,
+    badges: series.badges || [],
+    status: series.status,
+    cardIcon: "default",
+    headerKey: "default",
+    detailLine:
+      series.detailLine ||
+      `${series.subject}${items.some((x) => x.subject) ? ` · ${items.filter((x) => x.subject).length} subject-tagged resources` : ""}${marketingCount ? ` · ${marketingCount} marketing assets` : ""}`,
+    curriculum: series.curriculumType,
+    gradeBuckets: [`${series.gradeFrom}–${series.gradeTo}`],
+    lineItems,
+    folderPriceLabel:
+      min == null
+        ? `${lineItems.length} title${lineItems.length === 1 ? "" : "s"}`
+        : `${lineItems.length} title${lineItems.length === 1 ? "" : "s"} · From AED ${min}`,
+    folderDetailSummary: series.description || series.subject,
+    folderAccess: { passwordProtected: false },
+  };
 }
 
 export function AdminCatalogueSegmentPage() {
@@ -109,8 +183,12 @@ export function AdminCatalogueSegmentPage() {
     library: [],
     kits: [],
   });
+  const [textbookProducts, setTextbookProducts] = useState<CatalogueProductRow[]>([]);
 
-  const products = [...catalogueByTab[tab ?? "textbooks"], ...(extraProducts[tab ?? "textbooks"] ?? [])];
+  const products =
+    tab === "textbooks"
+      ? [...textbookProducts, ...(extraProducts.textbooks ?? [])]
+      : [...catalogueByTab[tab ?? "textbooks"], ...(extraProducts[tab ?? "textbooks"] ?? [])];
 
   function handleAddCatalogue(row: CatalogueProductRow) {
     const activeTab = tab ?? "textbooks";
@@ -132,6 +210,95 @@ export function AdminCatalogueSegmentPage() {
       });
       return { ...prev, [tab]: list };
     });
+  }
+
+  async function loadTextbookSeries() {
+    try {
+      const listRes = await api.get<{ ok: boolean; data: { series: ApiSeries[] } }>("admin/catalogue/series", {
+        params: { category: "textbooks" },
+      });
+      if (!listRes.data?.ok) {
+        setTextbookProducts([]);
+        return;
+      }
+      const rows = await Promise.all(
+        listRes.data.data.series.map(async (s) => {
+          const detailRes = await api.get<{
+            ok: boolean;
+            data: { items: ApiSeriesItem[]; marketingElements: Array<{ id: string }> };
+          }>(`admin/catalogue/series/${s.id}`);
+          const items = detailRes.data?.ok ? detailRes.data.data.items : [];
+          const marketingCount = detailRes.data?.ok ? detailRes.data.data.marketingElements.length : 0;
+          return mapApiSeriesToRow(s, items, marketingCount);
+        }),
+      );
+      setTextbookProducts(rows);
+    } catch {
+      setTextbookProducts([]);
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "textbooks") void loadTextbookSeries();
+  }, [tab]);
+
+  async function handleCreateTextbookSeries(input: TextbookSeriesCreateInput) {
+    const res = await api.post<{ ok: boolean; data: { series: { id: string } } }>("admin/catalogue/series", {
+      category: "textbooks",
+      name: input.name,
+      publisher: input.publisher,
+      format: input.format,
+      curriculum: input.curriculum,
+      subject: input.subject,
+      gradeFrom: input.gradeFrom,
+      gradeTo: input.gradeTo,
+      description: input.description,
+      detailLine: input.detailLine,
+      status: input.status,
+      badges: input.badges,
+      territories: input.territories,
+    });
+    const seriesId = res.data?.data?.series?.id;
+    if (!seriesId) return;
+    await Promise.all(
+      input.marketingElements.map((m) =>
+        api.post(`admin/catalogue/series/${seriesId}/marketing-elements`, {
+          assetType: m.assetType,
+          title: m.title,
+          assetUrl: m.assetUrl,
+          audienceStage: m.audienceStage,
+          status: "Published",
+        }),
+      ),
+    );
+    await loadTextbookSeries();
+  }
+
+  async function handleCreateSeriesItem(input: CatalogueSeriesItemCreateInput) {
+    const currentFolderId = new URLSearchParams(window.location.search).get("folder");
+    if (!currentFolderId) return;
+    const hasFiles = Boolean(input.coverImageFile || input.materialFile);
+    if (hasFiles) {
+      const fd = new FormData();
+      fd.append("resourceType", input.resourceType);
+      fd.append("title", input.title);
+      if (input.subject) fd.append("subject", input.subject);
+      fd.append("gradeLabel", input.gradeLabel);
+      if (input.internalSku) fd.append("internalSku", input.internalSku);
+      if (input.isbn) fd.append("isbn", input.isbn);
+      fd.append("format", input.format);
+      fd.append("price", String(input.price));
+      fd.append("priceUnit", input.priceUnit);
+      fd.append("status", input.status);
+      if (input.materialLinkUrl) fd.append("materialLinkUrl", input.materialLinkUrl);
+      if (input.inventoryNote) fd.append("inventoryNote", input.inventoryNote);
+      if (input.coverImageFile) fd.append("coverImage", input.coverImageFile);
+      if (input.materialFile) fd.append("materialFile", input.materialFile);
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, fd);
+    } else {
+      await api.post(`admin/catalogue/series/${currentFolderId}/items`, input);
+    }
+    await loadTextbookSeries();
   }
 
   const filtered = useMemo(() => {
@@ -183,13 +350,11 @@ export function AdminCatalogueSegmentPage() {
   ]);
 
   const [bookModalOpen, setBookModalOpen] = useState(false);
-  const [addBookTypeOpen, setAddBookTypeOpen] = useState(false);
-  const [addBookType, setAddBookType] = useState<"textbook" | "library" | null>(null);
   const [ebookPreviewItem, setEbookPreviewItem] = useState<CatalogueLineItem | null>(null);
 
   const folderId = searchParams.get("folder");
   const folderProduct = tab && folderId
-    ? (getCatalogueFolder(tab, folderId) ?? extraProducts[tab]?.find((p) => p.id === folderId))
+    ? products.find((p) => p.id === folderId)
     : undefined;
 
   const prevPathRef = useRef<string | null>(null);
@@ -205,14 +370,14 @@ export function AdminCatalogueSegmentPage() {
   }, [pathname, setSearchParams]);
 
   useEffect(() => {
-    if (folderId && tab && !getCatalogueFolder(tab, folderId) && !extraProducts[tab]?.find((p) => p.id === folderId)) {
+    if (folderId && tab && !products.find((p) => p.id === folderId)) {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.delete("folder");
         return next;
       });
     }
-  }, [folderId, tab, extraProducts, setSearchParams]);
+  }, [folderId, tab, products, setSearchParams]);
 
   const openFolder = (id: string) => {
     setSearchParams((prev) => {
@@ -241,7 +406,7 @@ export function AdminCatalogueSegmentPage() {
           product={folderProduct}
           t={t}
           onBack={closeFolder}
-          onAddBook={() => setAddBookTypeOpen(true)}
+          onAddBook={() => setBookModalOpen(true)}
           onEditFolder={() => setEditOpen(true)}
           onViewItem={(itemId) => {
             const item = folderProduct.lineItems.find((li) => li.id === itemId);
@@ -254,54 +419,14 @@ export function AdminCatalogueSegmentPage() {
           lineItem={ebookPreviewItem}
           folderName={folderProduct.name}
         />
-        <CatalogueBookItemModal open={bookModalOpen} onClose={() => setBookModalOpen(false)} onSaved={show} mode="add" onAdd={handleAddLineItem} />
-
-        {/* Book type picker */}
-        {addBookTypeOpen ? (
-          <div
-            className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
-            onMouseDown={(e) => e.target === e.currentTarget && setAddBookTypeOpen(false)}
-          >
-            <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/[0.06]">
-              <h2 className="text-[17px] font-bold text-[#1A1917]">Add to catalogue</h2>
-              <p className="mt-1 text-[13px] text-[#5C5A55]">What type of item would you like to add?</p>
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => { setAddBookTypeOpen(false); setAddBookType("textbook"); setBookModalOpen(true); }}
-                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[#E2E0D9] bg-[#FAFAF8] px-4 py-5 text-center transition hover:border-[#0A3D62] hover:bg-[#F0F4F8]"
-                >
-                  <span className="text-2xl">📚</span>
-                  <span className="text-[13px] font-semibold text-[#1A1917]">Textbook</span>
-                  <span className="text-[11px] text-[#9A9890]">Grade-level student book or digital licence</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setAddBookTypeOpen(false); setAddBookType("library"); setBookModalOpen(true); }}
-                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[#E2E0D9] bg-[#FAFAF8] px-4 py-5 text-center transition hover:border-[#0A3D62] hover:bg-[#F0F4F8]"
-                >
-                  <span className="text-2xl">📖</span>
-                  <span className="text-[13px] font-semibold text-[#1A1917]">Library book</span>
-                  <span className="text-[11px] text-[#9A9890]">Reading stage, levelled or supplementary title</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddBookTypeOpen(false)}
-                className="mt-4 w-full rounded-xl border border-[#E2E0D9] py-2 text-sm text-[#5C5A55] hover:bg-[#F5F4F0]"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Textbook or library book add modal based on chosen type */}
-        {addBookType === "textbook" ? (
-          <TextbookProductModal open={bookModalOpen} onClose={() => { setBookModalOpen(false); setAddBookType(null); }} onSaved={show} mode="add" />
-        ) : addBookType === "library" ? (
-          <LibraryCatalogueModal open={bookModalOpen} onClose={() => { setBookModalOpen(false); setAddBookType(null); }} onSaved={show} mode="add" />
-        ) : null}
+        <CatalogueBookItemModal
+          open={bookModalOpen}
+          onClose={() => setBookModalOpen(false)}
+          onSaved={show}
+          mode="add"
+          onAdd={handleAddLineItem}
+          onCreateItem={tab === "textbooks" ? handleCreateSeriesItem : undefined}
+        />
         {tab === "textbooks" ? (
           <TextbookProductModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
         ) : tab === "library" ? (
@@ -569,7 +694,14 @@ export function AdminCatalogueSegmentPage() {
 
       {tab === "textbooks" ? (
         <>
-          <TextbookProductModal open={addOpen} onClose={() => setAddOpen(false)} onSaved={show} mode="add" onAdd={handleAddCatalogue} />
+          <TextbookProductModal
+            open={addOpen}
+            onClose={() => setAddOpen(false)}
+            onSaved={show}
+            mode="add"
+            onAdd={handleAddCatalogue}
+            onCreateSeries={handleCreateTextbookSeries}
+          />
           <TextbookProductModal open={editOpen} onClose={() => setEditOpen(false)} onSaved={show} mode="edit" />
         </>
       ) : tab === "library" ? (

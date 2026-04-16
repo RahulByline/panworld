@@ -16,20 +16,37 @@ function Toggle({ label: text, defaultOn }: { label: string; defaultOn?: boolean
   );
 }
 
-export function UploadZone({ icon, title, sub }: { icon: string; title: string; sub: string }) {
+export function UploadZone({
+  icon,
+  title,
+  sub,
+  accept = "image/png,image/jpeg,image/webp",
+  onFileChange,
+}: {
+  icon: string;
+  title: string;
+  sub: string;
+  accept?: string;
+  onFileChange?: (file: File | null) => void;
+}) {
   const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      onFileChange?.(null);
+      return;
+    }
     setPreview(URL.createObjectURL(file));
+    onFileChange?.(file);
   }
 
   function remove(e: React.MouseEvent) {
     e.stopPropagation();
     setPreview(null);
     if (inputRef.current) inputRef.current.value = "";
+    onFileChange?.(null);
   }
 
   return (
@@ -37,7 +54,7 @@ export function UploadZone({ icon, title, sub }: { icon: string; title: string; 
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept={accept}
         className="hidden"
         onChange={handleFile}
       />
@@ -73,7 +90,26 @@ export function UploadZone({ icon, title, sub }: { icon: string; title: string; 
 }
 
 type ModalBase = { open: boolean; onClose: () => void; onSaved: (msg: string) => void };
-type TextbookModalProps = ModalBase & { mode: "add" | "edit"; onAdd?: (row: CatalogueProductRow) => void };
+export type TextbookSeriesCreateInput = {
+  name: string;
+  publisher: string;
+  format: string;
+  curriculum: string;
+  subject: string;
+  gradeFrom: string;
+  gradeTo: string;
+  description: string;
+  detailLine: string;
+  status: "Published" | "Draft" | "Archived";
+  badges: string[];
+  territories: string[];
+  marketingElements: Array<{ assetType: string; title: string; assetUrl: string; audienceStage: "PRE_SALES" | "POST_SALES" | "BOTH" }>;
+};
+type TextbookModalProps = ModalBase & {
+  mode: "add" | "edit";
+  onAdd?: (row: CatalogueProductRow) => void;
+  onCreateSeries?: (input: TextbookSeriesCreateInput) => Promise<void>;
+};
 
 const GRADES = ["KG1", "KG2", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12"];
 const PUBLISHERS = ["McGraw Hill", "Kodeit Global", "StudySync", "Oxford", "Cambridge", "Pearson", "Jolly Phonics"];
@@ -254,10 +290,13 @@ const emptyTextbook = () => ({
   badgeMaarif: false,
   territoryUae: true,
   territoryKsa: true,
+  brochureUrl: "",
+  demoUrl: "",
+  curriculumMapUrl: "",
   status: "Published" as "Published" | "Draft",
 });
 
-export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAdd }: TextbookModalProps) {
+export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAdd, onCreateSeries }: TextbookModalProps) {
   const { t } = useTranslation();
   const [form, setForm] = useState(emptyTextbook);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -281,7 +320,7 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
     return Object.keys(e).length === 0;
   }
 
-  function submit(asDraft: boolean) {
+  async function submit(asDraft: boolean) {
     if (!validate()) return;
     const id = `tb-${Date.now()}`;
     const grades = form.gradeFrom === form.gradeTo ? form.gradeFrom : `${form.gradeFrom}–${form.gradeTo}`;
@@ -309,9 +348,46 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
       folderDetailSummary: `${form.subject} · ${form.curriculum}`,
       folderAccess: { passwordProtected: false },
     };
-    onAdd?.(newRow);
-    onSaved(asDraft ? t("admin.catalogueModals.savedDraft") : t("admin.catalogueModals.textbookPublished"));
-    onClose();
+    try {
+      if (onCreateSeries) {
+        await onCreateSeries({
+          name: form.fullTitle.trim(),
+          publisher: form.publisher,
+          format: form.format,
+          curriculum: form.curriculum,
+          subject: form.subject,
+          gradeFrom: form.gradeFrom,
+          gradeTo: form.gradeTo,
+          description: form.description.trim(),
+          detailLine: form.description.trim().slice(0, 80),
+          status: asDraft ? "Draft" : "Published",
+          badges,
+          territories: [form.territoryUae ? "UAE" : "", form.territoryKsa ? "KSA" : ""].filter(Boolean),
+          marketingElements: [
+            form.brochureUrl.trim()
+              ? ({ assetType: "BROCHURE", title: "Series brochure", assetUrl: form.brochureUrl.trim(), audienceStage: "PRE_SALES" } as const)
+              : null,
+            form.demoUrl.trim()
+              ? ({ assetType: "DEMO", title: "Demo link", assetUrl: form.demoUrl.trim(), audienceStage: "PRE_SALES" } as const)
+              : null,
+            form.curriculumMapUrl.trim()
+              ? ({
+                  assetType: "CURRICULUM_MAP",
+                  title: "Curriculum mapping",
+                  assetUrl: form.curriculumMapUrl.trim(),
+                  audienceStage: "BOTH",
+                } as const)
+              : null,
+          ].filter((x): x is NonNullable<typeof x> => Boolean(x)),
+        });
+      } else {
+        onAdd?.(newRow);
+      }
+      onSaved(asDraft ? t("admin.catalogueModals.savedDraft") : t("admin.catalogueModals.textbookPublished"));
+      onClose();
+    } catch {
+      onSaved("Could not save catalogue right now. Please try again.");
+    }
   }
 
   return (
@@ -325,7 +401,7 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
           <Button type="button" variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button type="button" variant="secondary" onClick={() => submit(true)}>{t("admin.catalogueModals.saveDraft")}</Button>
           <Button type="button" className="bg-[#0A3D62] text-white hover:bg-[#071E36]" onClick={() => submit(false)}>
-            {t("admin.catalogueModals.publishTextbook")}
+            {t("admin.catalogueModals.publishCatalogue")}
           </Button>
         </div>
       }
@@ -425,6 +501,20 @@ export function TextbookProductModal({ open, onClose, onSaved, mode: _mode, onAd
       <div>
         <label className={lbl}>{t("admin.catalogueModals.folderListingImage")}</label>
         <UploadZone icon="🖼" title={t("admin.catalogueModals.uploadFolderCover")} sub="PNG, JPG · optional · folder card in catalogue" />
+      </div>
+      <div className={`${row2} mt-3`}>
+        <div>
+          <label className={lbl}>Brochure URL (pre-sales)</label>
+          <input className={inp} value={form.brochureUrl} onChange={(e) => set("brochureUrl", e.target.value)} placeholder="https://..." />
+        </div>
+        <div>
+          <label className={lbl}>Demo URL (pre-sales)</label>
+          <input className={inp} value={form.demoUrl} onChange={(e) => set("demoUrl", e.target.value)} placeholder="https://..." />
+        </div>
+      </div>
+      <div className="mt-3">
+        <label className={lbl}>Curriculum map URL (marketing/support)</label>
+        <input className={inp} value={form.curriculumMapUrl} onChange={(e) => set("curriculumMapUrl", e.target.value)} placeholder="https://..." />
       </div>
 
       <div className={section}>{t("admin.catalogueModals.sectionTerritory")}</div>
