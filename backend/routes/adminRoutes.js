@@ -127,6 +127,7 @@ router.get("/schools/:id", (req, res, next) => adminSchoolsController.getOne(req
 router.patch("/schools/:id", maybeSchoolLogoUpload, (req, res, next) =>
   adminSchoolsController.update(req, res, next),
 );
+router.delete("/schools/:id", (req, res, next) => adminSchoolsController.delete(req, res, next));
 router.post("/schools", maybeSchoolLogoUpload, (req, res, next) =>
   adminSchoolsController.create(req, res, next),
 );

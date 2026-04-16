@@ -3,9 +3,7 @@ import type { CountryCode } from "../types/domain";
 type Rand = () => number;
 function mulberry32(seed: number): Rand {
   return function () {
-    // eslint-disable-next-line no-param-reassign
     seed |= 0;
-    // eslint-disable-next-line no-param-reassign
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
