@@ -200,7 +200,10 @@ export function CatalogueFolderDetailView({
               <span className="text-[#94a3a0]"> · </span>
               <span className="text-[#5C5A55]">{metaParts.rest}</span>
             </p>
-            <p className="mt-1 text-[12px] text-[#9A9890]">{p.folderDetailSummary}</p>
+            <div 
+              className="mt-1 text-[12px] leading-relaxed text-[#5C5A55]"
+              dangerouslySetInnerHTML={{ __html: p.folderDetailSummary }} 
+            />
             <div className="mt-2 flex flex-wrap gap-1.5">
               {p.badges.map((b) => (
                 <span

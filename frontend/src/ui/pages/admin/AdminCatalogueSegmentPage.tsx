@@ -135,7 +135,7 @@ function mapApiSeriesToRow(series: ApiSeries, items: ApiSeriesItem[], marketingC
       min == null
         ? `${lineItems.length} title${lineItems.length === 1 ? "" : "s"}`
         : `${lineItems.length} title${lineItems.length === 1 ? "" : "s"} · From AED ${min}`,
-    folderDetailSummary: stripHtml(series.description || series.subject),
+    folderDetailSummary: series.description || series.subject,
     folderAccess: { passwordProtected: false },
   };
 }
@@ -323,6 +323,17 @@ export function AdminCatalogueSegmentPage() {
       });
     }
     await loadTextbookSeries();
+  }
+
+  async function handleUpdateSeriesStatus(id: string, status: CatalogueProductRow["status"], msg: string) {
+    try {
+      await api.patch(`admin/catalogue/series/${id}/status`, { status });
+      show(msg);
+      await loadTextbookSeries();
+    } catch (err: any) {
+      console.error(err);
+      show("Failed to update series status.");
+    }
   }
 
   const filtered = useMemo(() => {
@@ -692,6 +703,26 @@ export function AdminCatalogueSegmentPage() {
                         <Button type="button" size="sm" className="bg-[#0A3D62] text-white hover:bg-[#071E36]" onClick={() => setEditOpen(true)}>
                           {t("common.edit")}
                         </Button>
+                        {p.status === "Draft" ? (
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            className="bg-emerald-600 text-white hover:bg-emerald-700" 
+                            onClick={() => handleUpdateSeriesStatus(p.id, "Published", t("admin.pages.catalogueSegment.published"))}
+                          >
+                            {t("admin.pages.catalogueSegment.publish")}
+                          </Button>
+                        ) : p.status === "Published" ? (
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="secondary"
+                            className="bg-stone-100 text-[#5C5A55] hover:bg-stone-200" 
+                            onClick={() => handleUpdateSeriesStatus(p.id, "Archived", t("admin.pages.catalogueSegment.archived"))}
+                          >
+                            {t("admin.pages.catalogueSegment.archive")}
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -710,8 +741,8 @@ export function AdminCatalogueSegmentPage() {
               t={t}
               onOpenFolder={() => openFolder(p.id)}
               onEdit={() => setEditOpen(true)}
-              onArchive={() => show(t("admin.pages.catalogueSegment.archived"))}
-              onPublish={() => show(t("admin.pages.catalogueSegment.published"))}
+              onArchive={() => handleUpdateSeriesStatus(p.id, "Archived", t("admin.pages.catalogueSegment.archived"))}
+              onPublish={() => handleUpdateSeriesStatus(p.id, "Published", t("admin.pages.catalogueSegment.published"))}
             />
           ))}
         </div>

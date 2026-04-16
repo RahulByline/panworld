@@ -137,6 +137,9 @@ router.post("/catalogue/series", (req, res, next) => adminCatalogueController.cr
 router.post("/catalogue/series/:id/items", maybeCatalogueItemAssetsUpload, (req, res, next) =>
   adminCatalogueController.createSeriesItem(req, res, next),
 );
+router.patch("/catalogue/series/:id/status", (req, res, next) =>
+  adminCatalogueController.updateSeriesStatus(req, res, next),
+);
 router.post("/catalogue/series/:id/marketing-elements", (req, res, next) =>
   adminCatalogueController.createMarketingElement(req, res, next),
 );

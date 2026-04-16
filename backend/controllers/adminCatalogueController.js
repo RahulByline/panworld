@@ -318,3 +318,23 @@ exports.createMarketingElement = async (req, res, next) => {
     next(e);
   }
 };
+
+exports.updateSeriesStatus = async (req, res, next) => {
+  try {
+    const seriesId = t(req.params.id);
+    const status = t(req.body.status);
+    if (!seriesId) throw badRequest("Series id required");
+    if (!SERIES_STATUS.has(status)) throw badRequest("Invalid status");
+
+    const [result] = await pool.query(
+      "UPDATE catalogue_series SET status = ?, updated_by_user_id = ? WHERE id = ?",
+      [status, req.user.id, seriesId],
+    );
+
+    if (result.affectedRows === 0) throw notFound("Series not found");
+
+    res.json({ ok: true, message: `Series status updated to ${status}` });
+  } catch (e) {
+    next(e);
+  }
+};
